@@ -1,2 +1,4 @@
+[![Python application test with GitHub Actions](https://github.com/wufan118580-commits/ai-learn/actions/workflows/main.yml/badge.svg)](https://github.com/wufan118580-commits/ai-learn/actions/workflows/main.yml)
+
 # ai-learn
 AI学习助手系统。功能将文稿转为语音，抽取并梳理文稿中包含的知识
