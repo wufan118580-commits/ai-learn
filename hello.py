@@ -10,5 +10,5 @@ def add(x: int = 1, y: int = 2) -> int:
     """
     return x + y
 
-var=
+# var=
 print(f"This is the sum: {1}, {2}, {add()}")
