@@ -3,10 +3,10 @@ name: Python application test with GitHub Actions
 on: 
   push:
     branches:
-      [ main, develop ]  # 或者 master，根据你的主分支名称
+      [ main, develop ]  # 监听 main 和 develop 分支的推送
     pull_request:
       branches:
-        [ main ]  # 或者 master，根据你的主分支名称
+        [ main, develop ]  # 监听指向这两个分支的 PR
 
 jobs:
   test:
@@ -20,6 +20,7 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.9'  # 指定Python版本
+
 
     - name: Cache pip dependencies
       uses: actions/cache@v3
