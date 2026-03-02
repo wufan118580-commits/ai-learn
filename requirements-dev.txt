@@ -1,3 +1,4 @@
+-r requirements.txt  # 包含生产依赖
 pylint
 pytest
 click
