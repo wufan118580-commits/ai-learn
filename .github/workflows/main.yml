@@ -3,24 +3,36 @@ name: Python application test with GitHub Actions
 on: 
   push:
     branches:
-      - main  # 或者 master，根据你的主分支名称
+      [ main, develop ]  # 或者 master，根据你的主分支名称
+    pull_request:
+      branches:
+        [ main ]  # 或者 master，根据你的主分支名称
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
 
     steps:
     - name: Check out code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.8'  # 指定Python版本
+        python-version: '3.9'  # 指定Python版本
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+       
 
     - name: Install dependencies
       run: |
-        make install
+        make install-dev
 
     - name: Lint code
       run: |
@@ -34,3 +46,9 @@ jobs:
       run: |
         # 运行代码格式化工具，例如 black
         make format
+
+    - name: Upload coverage report
+      uses: codecov/codecov-action@v3
+      with:
+        name: coverage-report
+        path: .coverage
