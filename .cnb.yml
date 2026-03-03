@@ -29,7 +29,7 @@ main:
         
         # 阶段2：打包并部署
         - name: 部署到SCF
-          image: tencentcloud/scf:latest
+          image: tencentcom/scf
           # 引入密钥仓库的地址
           imports:
             - https://cnb.cool/Studuent-Wu/tencent-cloud-secrets/-/blob/main/scf-secrets.yml
