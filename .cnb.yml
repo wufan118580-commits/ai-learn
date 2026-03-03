@@ -28,7 +28,7 @@ main:
             def main_handler(event, context):
                 return handle_request(app, event, context)
             EOF
-            
+
             echo "📦 打包代码..."
             cd build_output
             zip -r ../flask-app.zip .
@@ -45,9 +45,9 @@ main:
           #   TENCENT_SECRET_ID: ${{ secrets.TENCENT_SECRET_ID }}
           #   TENCENT_SECRET_KEY: ${{ secrets.TENCENT_SECRET_KEY }}
           script: |
-            cd build_output
-            zip -r ../flask-app.zip .
-            cd ..
+            # cd build_output
+            # zip -r ../flask-app.zip .
+            # cd ..
             
             # 部署SCF
             scf deploy --function-name flask-demo \
