@@ -6,6 +6,8 @@ main:
           image: python:3.9-slim
           script: |
             mkdir -p build_output
+            echo "📦 安装系统工具..."
+            apt-get update && apt-get install -y zip  # 这里安装zip
             echo "📦 安装依赖..."
             if [ -f requirements.txt ]; then
               pip install -r requirements.txt -t ./build_output/vendor
