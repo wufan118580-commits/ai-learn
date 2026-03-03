@@ -32,7 +32,7 @@ main:
           image: tencentcloud/scf-cli
           # 引入密钥仓库的地址
           imports:
-            - https://cnb.cool/Studuent-Wu/tencent-cloud-secrets/-/raw/main/scf-secrets.yml
+            - https://cnb.cool/Studuent-Wu/tencent-cloud-secrets/-/blob/main/scf-secrets.yml
           # settings:
           #   TENCENT_SECRET_ID: ${{ secrets.TENCENT_SECRET_ID }}
           #   TENCENT_SECRET_KEY: ${{ secrets.TENCENT_SECRET_KEY }}
