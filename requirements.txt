@@ -1,2 +1,3 @@
 Flask
-gunicorn  # 用于生产部署
+serverless-wsgi
+werkzeug
