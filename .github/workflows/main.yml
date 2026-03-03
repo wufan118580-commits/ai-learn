@@ -1,4 +1,4 @@
-name: Python application test with GitHub Actions
+name: CI and Sync
 
 on: 
   push:
@@ -6,7 +6,7 @@ on:
       [ main, develop ]  # 监听 main 和 develop 分支的推送
     pull_request:
       branches:
-        [ main, develop ]  # 监听指向这两个分支的 PR
+        [ main ]  # 监听指向这两个分支的 PR
 
 jobs:
   test:
@@ -43,13 +43,34 @@ jobs:
       run: |
         make test
 
-    - name: Format code
-      run: |
-        # 运行代码格式化工具，例如 black
-        make format
+    # - name: Format code
+    #   run: |
+    #     # 运行代码格式化工具，例如 black
+    #     make format
 
-    - name: Upload coverage report
-      uses: codecov/codecov-action@v3
-      with:
-        name: coverage-report
-        path: .coverage
+    # - name: Upload coverage report
+    #   uses: codecov/codecov-action@v3
+    #   with:
+    #     name: coverage-report
+    #     path: .coverage
+
+    # 新增：只有 main 分支的推送才同步到 CNB
+  sync-to-cnb:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Sync to CNB Repository
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:${{ github.workspace }} \
+            -w ${{ github.workspace }} \
+            -e PLUGIN_TARGET_URL="https://cnb.cool/Studuent-Wu/ai-learn-demo.git" \
+            -e PLUGIN_AUTH_TYPE="https" \
+            -e PLUGIN_USERNAME="cnb" \
+            -e PLUGIN_PASSWORD=${{ secrets.CNB_TOKEN }} \
+            -e PLUGIN_FORCE="true" \
+            tencentcom/git-sync
