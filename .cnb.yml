@@ -28,6 +28,12 @@ main:
             def main_handler(event, context):
                 return handle_request(app, event, context)
             EOF
+            
+            echo "📦 打包代码..."
+            cd build_output
+            zip -r ../flask-app.zip .
+            cd ..
+            echo "✅ 打包完成"
         
         # 阶段2：打包并部署
         - name: 部署到SCF
