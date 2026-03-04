@@ -69,12 +69,13 @@ main:
             cd deploy
             # 部署SCF
             echo "🚀 部署SCF函数..."
-            scf deploy --function-name flask-demo \
-              --runtime Python3.9 \
-              --handler serverless_wsgi_handler.main_handler \
-              --region ap-guangzhou \
-              --memory-size 512 \
-              --timeout 10
+            # scf deploy --function-name flask-demo \
+            #   --runtime Python3.9 \
+            #   --handler serverless_wsgi_handler.main_handler \
+            #   --region ap-guangzhou \
+            #   --memory-size 512 \
+            #   --timeout 10
+            scf deploy --debug
             
             # 可选：创建API网关触发器
             scf create-trigger --function-name flask-demo \
