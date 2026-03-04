@@ -29,6 +29,10 @@ main:
                 return handle_request(app, event, context)
             EOF
 
+             
+            # 复制 serverless.yml 到打包目录
+            cp serverless.yml build_output/
+
             echo "📦 打包代码..."
             cd build_output
             zip -r ../flask-app.zip .
