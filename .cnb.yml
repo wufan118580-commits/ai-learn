@@ -34,9 +34,9 @@ main:
             EOF
 
              
-            if [ -f serverless.yml ]; then
-              cp serverless.yml deploy/
-            fi
+            # if [ -f serverless.yml ]; then
+            #   cp serverless.yml deploy/
+            # fi
 
             # echo "📦 打包为SCF部署包..."
             # cd build_output
@@ -66,7 +66,7 @@ main:
             ls -la deploy/
             
             echo "🚀 开始部署到云函数..."
-            cd deploy
+            # cd deploy
             # 部署SCF
             echo "🚀 部署SCF函数..."
             # scf deploy --function-name flask-demo \
