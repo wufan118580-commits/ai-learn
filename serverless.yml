@@ -4,7 +4,7 @@ name: flask-demo
 
 inputs:
   name: flask-demo
-  src: ./flask-app.zip  # 指向我们打包好的文件
+  src: ./deploy
   runtime: Python3.9
   region: ap-guangzhou
   handler: serverless_wsgi_handler.main_handler
