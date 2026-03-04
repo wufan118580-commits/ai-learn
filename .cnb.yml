@@ -64,6 +64,8 @@ main:
             # 直接部署目录（SCF工具会自动打包上传）
             echo "📂 查看部署目录内容..."
             ls -la deploy/
+            echo "📄 打印 serverless.yml 内容..."
+            cat serverless.yml  # 确认 configRole 是否正确
             
             echo "🚀 开始部署到云函数..."
             # cd deploy
