@@ -1,0 +1,18 @@
+# serverless.yml
+component: scf
+name: flask-demo
+
+inputs:
+  name: flask-demo
+  src: ./flask-app.zip  # 指向我们打包好的文件
+  runtime: Python3.9
+  region: ap-guangzhou
+  handler: serverless_wsgi_handler.main_handler
+  memorySize: 512
+  timeout: 10
+  events:
+    - apigw:
+        parameters:
+          endpoints:
+            - path: /
+              method: ANY

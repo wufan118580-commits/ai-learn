@@ -31,7 +31,7 @@ main:
 
              
             # 复制 serverless.yml 到打包目录
-            # cp serverless.yml build_output/
+            cp serverless.yml build_output/
 
             echo "📦 打包为SCF部署包..."
             cd build_output
