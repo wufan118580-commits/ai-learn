@@ -9,9 +9,8 @@ def hello():
 
 
 # 这个函数会被云函数调用
+from serverless_wsgi import handle_request
 def main_handler(event, context):
-    from serverless_wsgi import handle_request
-
     return handle_request(app, event, context)
 
 

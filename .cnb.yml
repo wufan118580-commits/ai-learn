@@ -5,17 +5,17 @@ main:
         - name: 准备Python依赖
           image: python:3.9-slim
           script: |
-            mkdir -p build_output
+            mkdir -p build_output/vendor
             echo "📦 安装系统工具..."
             apt-get update && apt-get install -y zip  # 这里安装zip
-            echo "📦 安装依赖..."
+            echo "📦 安装Python依赖..."
             if [ -f requirements.txt ]; then
               pip install -r requirements.txt -t ./build_output/vendor
             else
               echo "⚠️ requirements.txt not found"
               exit 1
             fi
-            cp app.py build_output/
+            cp app.py ./build_output/
             
             # 添加SCF入口适配
             cat > build_output/serverless_wsgi_handler.py << 'EOF'
@@ -31,13 +31,13 @@ main:
 
              
             # 复制 serverless.yml 到打包目录
-            cp serverless.yml build_output/
+            # cp serverless.yml build_output/
 
-            echo "📦 打包代码..."
+            echo "📦 打包为SCF部署包..."
             cd build_output
             zip -r ../flask-app.zip .
             cd ..
-            echo "✅ 打包完成"
+            echo "✅ 打包完成：flask-app.zip"
         
         # 阶段2：打包并部署
         - name: 部署到SCF
@@ -54,15 +54,18 @@ main:
             # cd ..
             
             # 部署SCF
+            echo "🚀 部署SCF函数..."
             scf deploy --function-name flask-demo \
               --runtime Python3.9 \
               --handler serverless_wsgi_handler.main_handler \
               --zip-file flask-app.zip \
               --region ap-guangzhou \
               --memory-size 512 \
-              --timeout 3
+              --timeout 10
             
             # 可选：创建API网关触发器
             scf create-trigger --function-name flask-demo \
               --type apigw \
-              --region ap-guangzhou
+              --region ap-guangzhou \
+              --trigger-name api-gateway \
+              --enable
