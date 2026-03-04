@@ -4,7 +4,7 @@ name: flask-demo
 
 inputs:
   name: flask-demo
-  src: ./deploy
+  src: ./
   runtime: Python3.9
   region: ap-guangzhou
   handler: serverless_wsgi_handler.main_handler
