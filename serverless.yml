@@ -7,7 +7,7 @@ globalOptions:        # <--- 添加此行
 
 inputs:
   name: flask-demo
-  src: ./
+  src: ./deploy
   runtime: Python3.9
   region: ap-guangzhou
   handler: serverless_wsgi_handler.main_handler
