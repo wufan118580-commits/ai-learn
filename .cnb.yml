@@ -34,8 +34,9 @@ main:
             EOF
 
              
-            # 复制 serverless.yml 到打包目录
-            # cp serverless.yml build_output/
+            if [ -f serverless.yml ]; then
+              cp serverless.yml deploy/
+            fi
 
             # echo "📦 打包为SCF部署包..."
             # cd build_output
