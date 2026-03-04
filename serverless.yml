@@ -2,6 +2,9 @@
 component: scf
 name: flask-demo
 
+globalOptions:        # <--- 添加此行
+  configRole: scf-flask-demo-role  # <--- 填入你创建的角色名
+
 inputs:
   name: flask-demo
   src: ./
