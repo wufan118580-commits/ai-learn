@@ -1,3 +1,4 @@
 Flask
+gunicorn
 serverless-wsgi
 werkzeug
