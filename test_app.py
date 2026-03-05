@@ -13,7 +13,7 @@ def test_hello_endpoint(client):
     """测试根路径返回正确内容"""
     response = client.get("/")
     assert response.status_code == 200
-    assert b"Hello from SCF!" in response.data
+    assert b"Hello World from Python Flask!" in response.data
 
 
 def test_health_check(client):
