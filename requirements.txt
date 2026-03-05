@@ -2,3 +2,8 @@ Flask
 gunicorn
 serverless-wsgi
 werkzeug
+streamlit
+PyPDF2
+python-docx
+chardet
+requests
