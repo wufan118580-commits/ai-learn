@@ -4,3 +4,7 @@ pytest
 click
 black
 pytest-cov
+
+flake8
+mypy
+pre-commit
