@@ -1,7 +1,7 @@
 import os
 import tempfile
 from typing import Optional
-import PyPDF2
+from pypdf import PdfReader
 from docx import Document
 import chardet
 
@@ -24,7 +24,7 @@ class DocumentProcessor:
         """从PDF文件提取文本"""
         text = []
         with open(file_path, "rb") as f:
-            pdf_reader = PyPDF2.PdfReader(f)
+            pdf_reader = PdfReader(f)
             for page in pdf_reader.pages:
                 page_text = page.extract_text()
                 if page_text:

@@ -5,17 +5,19 @@ class DeepSeekService:
     """DeepSeek API服务封装"""
     
     BASE_URL = "https://api.deepseek.com/v1/chat/completions"
+    # BASE_URL = "https://api.deepseek.com"
     DEFAULT_TIMEOUT = 30  # 30秒超时
     
     def __init__(self, api_key: str):
         self.api_key = api_key
+        # print('sdfsfs:', self.api_key)
         self.session = requests.Session()
         self.session.headers.update({
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         })
     
-    def generate(self, prompt: str, max_tokens: int = 4000) -> Optional[str]:
+    def generate(self, prompt: str, max_tokens: int = 8000) -> Optional[str]:
         """调用DeepSeek生成内容"""
         payload: Dict[str, Any] = {
             "model": "deepseek-chat",
