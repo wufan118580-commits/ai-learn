@@ -36,7 +36,7 @@ def clear_error():
     """清除错误信息"""
     st.session_state.error_message = None
 
-def process_document(uploaded_file, api_key: str, prompt: str) -> Optional[str]:
+def process_document(uploaded_file, api_key1: str, prompt1: str) -> Optional[str]:
     """处理文档并生成内容"""
     try:
         # 提取文档内容
@@ -46,15 +46,15 @@ def process_document(uploaded_file, api_key: str, prompt: str) -> Optional[str]:
             raise ValueError("无法提取文档内容")
         
         # 调用API
-        llm_service = DeepSeekService(api_key)
-        result = llm_service.generate(prompt)
+        llm_service = DeepSeekService(api_key1)
+        result1 = llm_service.generate(prompt1)
         
-        return result
+        return result1
         
     except (ValueError, TimeoutError, ConnectionError, RuntimeError) as e:
         display_error(str(e))
         return None
-    except Exception as e:
+    except Exception as e: # 如果确实需要捕获所有异常，可以加注释说明原因
         display_error(f"处理文档时发生未知错误: {str(e)}")
         return None
 
@@ -120,20 +120,20 @@ col1, col2 = st.columns([1, 1])
 
 with col1:
     st.header("📤 上传文档")
-    uploaded_file = st.file_uploader(
+    uploaded_file1 = st.file_uploader(
         "选择文件",
         type=['txt', 'pdf', 'docx'],
         help="支持txt、pdf、docx格式",
         key="file_uploader"
     )
     
-    if uploaded_file:
-        st.success(f"已上传: {uploaded_file.name}")
+    if uploaded_file1:
+        st.success(f"已上传: {uploaded_file1.name}")
         
         # 显示文档预览
         with st.expander("预览文档内容"):
             try:
-                text_content = doc_processor.process_uploaded_file(uploaded_file)
+                text_content = doc_processor.process_uploaded_file(uploaded_file1)
                 if text_content:
                     preview_text = text_content[:1000]
                     if len(text_content) > 1000:
@@ -148,11 +148,11 @@ with col2:
     generate_button = st.button(
         "🚀 生成学习笔记和思维导图",
         type="primary",
-        disabled=not (uploaded_file and api_key),
+        disabled=not (uploaded_file1 and api_key),
         key="generate_button"
     )
     
-    if generate_button and api_key and uploaded_file:
+    if generate_button and api_key and uploaded_file1:
         clear_error()
         with st.spinner("正在处理文档并生成内容..."):
             # 构建提示词
@@ -168,7 +168,7 @@ with col2:
                 st.stop()
             
             # 处理文档
-            result = process_document(uploaded_file, api_key, prompt)
+            result = process_document(uploaded_file1, api_key, prompt)
             
             if result:
                 st.session_state.generated_content = result

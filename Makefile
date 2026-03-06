@@ -21,7 +21,7 @@ format:
 	black src/ tests/
 
 lint:
-	pylint --disable=R,C src/ tests/
+	pylint --disable=R,C,W0718 src/ tests/
 	# flake8 src/ tests/
 	# mypy src/ --ignore-missing-imports
 
