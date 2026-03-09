@@ -3,7 +3,9 @@ gunicorn
 serverless-wsgi
 werkzeug
 streamlit
+streamlit-mermaid
 pypdf
 python-docx
 chardet
 requests
+openai
