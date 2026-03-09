@@ -16,19 +16,17 @@ COPY . .
 
 # 设置环境变量
 ENV PYTHONUNBUFFERED=1
-ENV GUNICORN_WORKERS=1
-ENV GUNICORN_THREADS=4
-ENV GUNICORN_TIMEOUT=60
+ENV STREAMLIT_SERVER_PORT=8501
+ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
 
-# 安装依赖到指定的/install文件夹
+# 安装依赖
 # 选用国内镜像源以提高下载速度
 RUN pip config set global.index-url http://mirrors.cloud.tencent.com/pypi/simple && \
     pip config set global.trusted-host mirrors.cloud.tencent.com && \
     pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-EXPOSE 80
+EXPOSE 8501
 
-# 启动 Web 服务
-# 如果您的容器实例拥有多个 CPU 核心，我们推荐您把线程数设置为与 CPU 核心数一致
-CMD exec gunicorn --bind :80 --workers ${GUNICORN_WORKERS} --threads ${GUNICORN_THREADS} --timeout ${GUNICORN_TIMEOUT} app:app
+# 启动 Streamlit 应用
+CMD ["streamlit", "run", "src/app.py", "--server.port=8501", "--server.address=0.0.0.0"]
