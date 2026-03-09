@@ -1,32 +1,46 @@
 from llm_service import DeepSeekService
+from typing import Dict
+import os
+import tempfile
+from datetime import datetime
 
 class NoteGenerator:
     """学习笔记生成器（集成知识图谱）"""
 
     def __init__(self, api_key: str):
         self.deepseek_client = DeepSeekService(api_key)
+        self.temp_dir = tempfile.mkdtemp()
 
-    def generate_document_notes(self, content: str, filename: str="", ) -> Dict:
+    def generate_document_notes(self, prompt: str, filename: str = "") -> Dict:
         """为单个文档生成学习笔记（包含知识图谱）"""
         print(f"为文档 '{filename}' 生成学习笔记...")
 
         # 一次API调用生成完整笔记
         notes = self.deepseek_client.generate_comprehensive_notes(
-            content=content,
+            prompt=prompt,
             filename=filename,
         )
+        # print(f"生成学习笔记完成: {notes}")
         # 后处理结果
         result = {}
         # 1. 格式化单个文档笔记为Markdown
-        result['md'] = self._format_document_notes_md(notes)   
+        result['md'] = self._format_document_notes_md(notes)
+        # print(result['md'])
         # 2. 获取知识图谱的html格式内容
         mermaid_code = self.extract_mermaid_code(notes.get('knowledge_graph', ''))
         result['html'] = ''
         if mermaid_code:
-            # 生成HTML预览
-            html_path = os.path.join(output_dir, f"{filename}_graph.html")
-            result['html'] = self._generate_mermaid_html(mermaid_code, html_path, f"{notes.get('filename')} 知识图谱")
-            
+            # 生成HTML预览并保存到临时文件
+            safe_filename = filename.replace(' ', '_').replace('/', '_').replace('\\', '_')
+            html_path = os.path.join(self.temp_dir, f"{safe_filename}_graph.html")
+            html_content = self._generate_mermaid_html(mermaid_code, f"{filename} 知识图谱")
+            # 写入HTML文件
+            with open(html_path, 'w', encoding='utf-8') as f:
+                f.write(html_content)
+            # 返回HTML内容和文件路径
+            result['html'] = html_content
+            result['html_path'] = html_path
+
         return result
     def extract_mermaid_code(self, text: str) -> str:
         """从文本中提取Mermaid代码"""
@@ -66,7 +80,7 @@ class NoteGenerator:
         else:
             md += f"{core_concepts}\n"
 
-        md += f"\n## 📚 知识要点\n"
+        md += "\n## 📚 知识要点\n"
         key_points = notes.get('key_points', [])
         if isinstance(key_points, list):
             for point in key_points:
@@ -85,7 +99,7 @@ class NoteGenerator:
 {notes.get('knowledge_graph', '```mermaid graph TD  A[知识图谱生成失败]```')}
 
 ---
-*所属单元: {notes.get('unit', '未知单元')}*  
+*所属单元: {notes.get('unit', '未知单元')}*
 *生成时间: {notes.get('generated_time', datetime.now().isoformat())}*
 """
         return md

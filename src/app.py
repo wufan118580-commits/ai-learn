@@ -2,7 +2,6 @@ import streamlit as st
 import os
 from dotenv import load_dotenv
 from document_processor import DocumentProcessor
-from llm_service import DeepSeekService
 from prompt_templates import PromptManager
 from note_generator import NoteGenerator
 import re
@@ -24,6 +23,12 @@ st.set_page_config(
 # 尝试导入 streamlit-mermaid
 
 from streamlit_mermaid import st_mermaid
+
+# 初始化session state
+if 'generated_result' not in st.session_state:
+    st.session_state.generated_result = None
+if 'last_uploaded_file' not in st.session_state:
+    st.session_state.last_uploaded_file = None
 
 
 # 标题
@@ -115,7 +120,8 @@ with col2:
         "🚀 生成学习笔记和思维导图",
         type="primary",
         use_container_width=True,
-        disabled=not (uploaded_file and api_key)
+        disabled=not (uploaded_file and api_key),
+        key="generate_button"
     )
 
 # 结果显示区域
@@ -124,7 +130,7 @@ if generate_button and api_key:
         try:
             # 提取文档内容
             document_text = doc_processor.process_uploaded_file(uploaded_file)
-            
+
             if not document_text:
                 st.error("❌ 无法提取文档内容")
             else:
@@ -136,113 +142,92 @@ if generate_button and api_key:
                     )
                 else:
                     prompt = custom_prompt.replace("{document_text}", document_text[:12000])
-                
+
                 # 调用API
                 note_generator = NoteGenerator(api_key)
                 result = note_generator.generate_document_notes(prompt, uploaded_file.name)
-                
+
+                # 保存结果到session state
+                st.session_state.generated_result = result
+                st.session_state.last_uploaded_file = uploaded_file.name
+
                 # 显示结果
                 st.success("✅ 生成完成！")
-                
-                # 创建结果显示区域
-                result_tabs = st.tabs(["📖 学习笔记", "🧠 思维导图", "📝 完整输出"])
-                
-                # 解析Mermaid代码
-                mermaid_pattern = r'```mermaid\n(.*?)\n```'
-                mermaid_matches = re.findall(mermaid_pattern, result, re.DOTALL)
 
-                if mermaid_matches:
-                    # 分离笔记和思维导图
-                    # 移除所有Mermaid代码块，剩下的就是笔记
-                    notes = re.sub(mermaid_pattern, '', result, flags=re.DOTALL)
-
-                    with result_tabs[0]:
-                        st.markdown("### 📖 学习笔记")
-                        st.markdown(notes)
-
-                    with result_tabs[1]:
-                        st.markdown("### 🧠 思维导图")
-
-                        # 显示Mermaid图表（如果有多个，全部显示）
-                        for i, mermaid_code in enumerate(mermaid_matches, 1):
-                            if len(mermaid_matches) > 1:
-                                st.markdown(f"**思维导图 {i}**")
-
-                            # 清理Mermaid代码 - 移除非法字符
-                            cleaned_code = mermaid_code.strip()
-                            # 移除HTML转义字符
-                            import html
-                            cleaned_code = html.unescape(cleaned_code)
-                            # 移除所有HTML标签
-                            cleaned_code = re.sub(r'<[^>]+>', '', cleaned_code)
-                            # 移除中文标点（逗号、分号、顿号、书名号、波浪号等）
-                            cleaned_code = re.sub(r'[，；、。；：、。；：？【】《》""''（）()]', ' ', cleaned_code)
-                            cleaned_code = re.sub(r'[～~]', '-', cleaned_code)
-                            cleaned_code = re.sub(r'[《》]', '|', cleaned_code)
-                            # 移除其他非法符号
-                            cleaned_code = re.sub(r'[★●▪►▼▲]', '', cleaned_code)
-                            # 移除前后空白行
-                            lines = [line for line in cleaned_code.split('\n') if line.strip()]
-                            cleaned_code = '\n'.join(lines)
-
-                            # 分为两个区域：代码编辑区和渲染结果区
-                            col_code, col_render = st.columns([2, 1])
-
-                            with col_code:
-                                st.markdown("### 📝 Mermaid 代码")
-                                editable_code = st.text_area(
-                                    "编辑 Mermaid 代码",
-                                    value=cleaned_code,
-                                    height=500,
-                                    # key=f"mermaid_code_{i}",
-                                    # help="可以手动修改 Mermaid 代码，右侧会实时渲染"
-                                )
-
-                            with col_render:
-                                st.markdown("### 🖼️ 渲染结果")
-                                try:
-                                    st_mermaid(editable_code, height="500px")
-                                except Exception as e:
-                                    st.error(f"❌ Mermaid渲染失败: {e}")
-                                    st.markdown("### 错误提示:")
-                                    st.markdown("请检查 Mermaid 代码语法是否正确，常见问题：")
-                                    st.markdown("- 缺少 `graph TD` 或 `flowchart` 开头")
-                                    st.markdown("- 包含非法字符（如中文标点）")
-                                    st.markdown("- 节点名称格式不正确")
-                            
-
-                            # 下载按钮
-                            st.download_button(
-                                label=f"📥 下载思维导图{i}.mmd",
-                                data=mermaid_code,
-                                file_name=f"mindmap_{i}.mmd",
-                                mime="text/plain",
-                                key=f"download_{i}"
-                            )
-                    
-                    with result_tabs[2]:
-                        st.markdown("### 📝 完整输出")
-                        st.markdown(result)
-                
-                else:
-                    # 如果没有检测到Mermaid代码，统一显示在完整输出中
-                    with result_tabs[0]:
-                        st.info("未检测到思维导图，显示完整内容")
-                        st.markdown(result)
-                    
-                    with result_tabs[1]:
-                        st.info("未检测到思维导图")
-                    
-                    with result_tabs[2]:
-                        st.markdown("### 📝 完整输出")
-                        st.markdown(result)
-                
         except Exception as e:
             st.error(f"❌ 生成失败: {str(e)}")
-            
             # 显示错误详情（开发调试用）
             with st.expander("查看错误详情"):
                 st.exception(e)
+
+# 显示之前生成的结果（如果有）
+if st.session_state.generated_result:
+    result = st.session_state.generated_result
+
+    # 创建结果显示区域
+    result_tabs = st.tabs(["📖 学习笔记", "🧠 思维导图", "📝 完整输出"])
+
+    with result_tabs[0]:
+        st.markdown("### 📖 学习笔记")
+        st.markdown(result['md'])
+
+    with result_tabs[1]:
+        st.markdown("### 🧠 思维导图")
+        if result.get('html'):
+            # 提供HTML预览链接
+            st.markdown("### 📊 交互式思维导图")
+            st.info("💡 点击下方按钮下载HTML文件，用浏览器打开查看交互式思维导图")
+
+            if 'html_path' in result and os.path.exists(result['html_path']):
+                # 读取HTML文件内容并显示下载按钮
+                with open(result['html_path'], 'r', encoding='utf-8') as f:
+                    html_content = f.read()
+
+                # 显示下载按钮
+                st.download_button(
+                    label="📥 下载思维导图HTML文件",
+                    data=html_content,
+                    file_name=os.path.basename(result['html_path']),
+                    mime="text/html",
+                    key=f"download_html_{st.session_state.last_uploaded_file}"
+                )
+
+                # 显示使用说明
+                st.markdown("""
+                **使用说明：**
+                1. 点击上方按钮下载HTML文件
+                2. 用浏览器打开下载的HTML文件
+                3. 可以在页面中查看、缩放、拖动思维导图
+                4. 支持导出为SVG格式
+                """)
+            else:
+                st.warning("⚠️ HTML文件未找到，尝试直接渲染...")
+
+                # 尝试直接使用streamlit-mermaid渲染
+                mermaid_code = note_generator.extract_mermaid_code(result.get('md', ''))
+                if mermaid_code:
+                    # 清理非法字符
+                    import html as html_module
+
+                    cleaned_code = mermaid_code.strip()
+                    cleaned_code = html_module.unescape(cleaned_code)
+                    cleaned_code = re.sub(r'<[^>]+>', '', cleaned_code)
+                    # 清理中文标点和特殊符号
+                    illegal_chars = "，；、。；：、。；：？【】《》\"'（）()～~►▼▲★●▪"
+                    for char in illegal_chars:
+                        cleaned_code = cleaned_code.replace(char, '')
+                    lines = [line for line in cleaned_code.split('\n') if line.strip()]
+                    cleaned_code = '\n'.join(lines)
+
+                    st_mermaid(cleaned_code, height="600px")
+                else:
+                    st.error("❌ 未找到有效的Mermaid代码")
+        else:
+            st.info("📝 暂无思维导图内容")
+
+    with result_tabs[2]:
+        st.markdown("### 📝 完整输出")
+        st.markdown(result.get('md', '无内容'))
 
 # 底部信息
 st.markdown("---")

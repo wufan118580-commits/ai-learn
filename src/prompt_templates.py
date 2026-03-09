@@ -4,14 +4,11 @@ class PromptManager:
     """管理提示词模板"""
     
     DEFAULT_TEMPLATES = {
-        "学习笔记": f"""请基于以下学习材料，生成一份完整的学习笔记，包含详细的知识梳理和Mermaid格式的知识图谱：
-
-文档名称: {filename}
-主题提示: {topic_hint}
-内容长度: {len(content)} 字符
+        "学习笔记": """请基于以下学习材料，生成一份完整的学习笔记，包含详细的知识梳理和Mermaid格式的知识图谱：
+内容长度: {content_length} 字符
 
 学习材料内容:
-{content[:12000]}  # 限制输入长度
+{document_text}
 
 请按照以下结构生成学习笔记：
 
@@ -67,4 +64,4 @@ class PromptManager:
             return custom_prompt.replace("{document_text}", document_text)
         # 使用内置模板
         template = self.get_template(template_name)
-        return template.format(document_text=document_text)
+        return template.format(document_text=document_text, content_length=len(document_text))

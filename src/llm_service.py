@@ -1,44 +1,29 @@
-import requests
-from typing import Optional
+
 from openai import OpenAI
+import os
+import json
+from datetime import datetime
+from dotenv import load_dotenv
+
+# 加载环境变量
+load_dotenv()
+
+BASE_URL = os.getenv("BASE_URL", "https://api.deepseek.com").rstrip('/')
+DEEPSEEK_MODEL = os.getenv("MODEL_NAME", "deepseek-chat")
+
 
 class DeepSeekService:
     """DeepSeek API服务封装"""
 
-    BASE_URL = "https://api.deepseek.com/v1/chat/completions"
-
+    
     def __init__(self, api_key: str):
-        self.api_key = api_key
+        if not api_key:
+            raise ValueError("API Key 不能为空")
+
         self.client = OpenAI(
             api_key=api_key,
             base_url=BASE_URL
         )
-
-    def generate(self, prompt: str, max_tokens: int = 8000) -> Optional[str]:
-        """调用DeepSeek生成内容"""
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
-
-        payload = {
-            "model": "deepseek-chat",
-            "messages": [
-                {"role": "system", "content": "你是一个专业的知识提取助手，擅长从文档中提取关键信息并生成结构化的学习笔记和思维导图。"},
-                {"role": "user", "content": prompt}
-            ],
-            "max_tokens": max_tokens,
-            "temperature": 0.7
-        }
-
-        try:
-            response = requests.post(self.BASE_URL, headers=headers, json=payload, timeout=60)
-            response.raise_for_status()
-            result = response.json()
-            return result['choices'][0]['message']['content']
-        except requests.RequestException as e:
-            raise RuntimeError(f"API调用失败: {str(e)}") from e
-
 
     def generate_comprehensive_notes(self, prompt: str, max_tokens: int = 8000, filename: str = "") -> dict:
         try:
@@ -50,7 +35,7 @@ class DeepSeekService:
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.4,
-                max_tokens=8000,
+                max_tokens=max_tokens,
                 response_format={"type": "json_object"}
             )
 
@@ -69,7 +54,7 @@ class DeepSeekService:
 
         except json.JSONDecodeError as e:
             print(f"JSON解析失败: {e}")
-            return self._create_fallback_notes(filename, topic_hint, content)
+            return self._create_fallback_notes(filename)
         except Exception as e:
             print(f"生成学习笔记失败: {e}")
             return None
@@ -97,6 +82,19 @@ class DeepSeekService:
         mermaid_code += "```"
         return mermaid_code 
     
+    def _create_fallback_notes(self, filename: str,) -> dict:
+        """创建备用的学习笔记"""
+        return {
+            "filename": filename,
+            "document_overview": f"【文档概述】{filename} 的学习内容",
+            "core_concepts": ["主要概念"],
+            "key_points": ["请查看原始文档获取详细信息"],
+            "logical_relationships": "逻辑关系待分析",
+            "learning_suggestions": "建议直接阅读原文并做笔记",
+            "knowledge_graph": self._generate_default_mermaid(["核心概念"]),
+            "generated_time": datetime.now().isoformat()
+        }
+
     def translate_to_chinese(self, text: str, source_language: str = "auto") -> str:
         """将文本翻译成中文"""
         prompt = f"""请将以下文本翻译成中文：
