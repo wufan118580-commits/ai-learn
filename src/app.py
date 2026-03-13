@@ -175,9 +175,9 @@ with function_tabs[1]:
         # 语速和音调
         col3, col4 = st.columns(2)
         with col3:
-            rate = st.slider("语速调整", -50, 50, 0, 10, format_func=lambda x: f"{x:+d}%")
+            rate = st.slider("语速调整", -50, 50, 0, 10, format="%d%%")
         with col4:
-            pitch = st.slider("音调调整", -10, 10, 0, 1, format_func=lambda x: f"{x:+d}Hz")
+            pitch = st.slider("音调调整", -10, 10, 0, 1, format="%dHz")
 
         # 生成语音按钮
         generate_tts_button = st.button(
@@ -291,12 +291,59 @@ if st.session_state.generated_result:
     st.markdown("---")
     result = st.session_state.generated_result
 
+    # 初始化编辑状态
+    if 'edit_mode' not in st.session_state:
+        st.session_state.edit_mode = False
+    if 'edited_notes' not in st.session_state:
+        st.session_state.edited_notes = None
+
     # 创建结果显示区域
     result_tabs = st.tabs(["📖 学习笔记", "🧠 思维导图", "📝 完整输出"])
 
     with result_tabs[0]:
         st.markdown("### 📖 学习笔记")
-        st.markdown(result['md'])
+
+        # 添加下载和编辑按钮
+        col1, col2, col3 = st.columns([1, 1, 1])
+        with col1:
+            st.download_button(
+                label="📥 下载学习笔记 (MD)",
+                data=st.session_state.edited_notes if st.session_state.edited_notes else result['md'],
+                file_name=f"{os.path.splitext(st.session_state.last_uploaded_file)[0]}_学习笔记.md",
+                mime="text/markdown",
+                key=f"download_notes_{st.session_state.last_uploaded_file}"
+            )
+        with col2:
+            if st.button("✏️ 编辑笔记" if not st.session_state.edit_mode else "👁️ 查看预览", key="toggle_edit"):
+                st.session_state.edit_mode = not st.session_state.edit_mode
+                if not st.session_state.edit_mode:
+                    # 退出编辑模式，保存修改
+                    st.session_state.edited_notes = st.session_state.get('temp_edited_notes')
+                    st.rerun()
+        with col3:
+            if st.session_state.edit_mode and st.button("💾 保存修改", key="save_notes"):
+                st.session_state.edited_notes = st.session_state.get('temp_edited_notes')
+                st.session_state.edit_mode = False
+                st.success("✅ 已保存修改！")
+                st.rerun()
+
+        st.markdown("---")
+
+        # 显示编辑或预览
+        if st.session_state.edit_mode:
+            st.info("📝 编辑模式：下方文本框中修改内容，点击\"💾 保存修改\"或\"👁️ 查看预览\"来保存")
+            edited_content = st.text_area(
+                "编辑学习笔记内容",
+                value=st.session_state.edited_notes if st.session_state.edited_notes else result['md'],
+                height=600,
+                key="notes_editor"
+            )
+            # 暂存编辑内容
+            st.session_state.temp_edited_notes = edited_content
+        else:
+            # 显示 Markdown 预览
+            content_to_show = st.session_state.edited_notes if st.session_state.edited_notes else result['md']
+            st.markdown(content_to_show)
 
     with result_tabs[1]:
         st.markdown("### 🧠 思维导图")
