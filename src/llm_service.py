@@ -126,3 +126,63 @@ class DeepSeekService:
         except Exception as e:
             print(f"翻译失败: {e}")
             return None
+
+    def translate_document(
+        self,
+        text: str,
+        source_language: str = "auto",
+        chunk_size: int = 8000,
+        progress_callback=None
+    ) -> str:
+        """
+        将文档翻译成中文（支持长文档分块翻译）
+
+        Args:
+            text: 要翻译的文本
+            source_language: 源语言，默认为 auto 自动检测
+            chunk_size: 每块的最大字符数
+            progress_callback: 进度回调函数，参数为 (当前块, 总块数)
+
+        Returns:
+            翻译后的中文文本
+        """
+        # 如果文本较短，直接翻译
+        if len(text) <= chunk_size:
+            return self.translate_to_chinese(text, source_language)
+
+        # 分块翻译
+        chunks = []
+        current_pos = 0
+        total_chunks = (len(text) + chunk_size - 1) // chunk_size
+
+        while current_pos < len(text):
+            chunk = text[current_pos:current_pos + chunk_size]
+
+            # 尝试在句子边界分割
+            if current_pos + chunk_size < len(text):
+                # 查找最近的句号、问号、感叹号
+                for separator in ['。', '！', '？', '.', '!', '?', '\n']:
+                    last_sep = chunk.rfind(separator)
+                    if last_sep > len(chunk) * 0.7:  # 确保不会切得太短
+                        chunk = chunk[:last_sep + 1]
+                        current_pos += last_sep + 1
+                        break
+                else:
+                    current_pos += chunk_size
+            else:
+                current_pos += chunk_size
+
+            # 翻译当前块
+            translated_chunk = self.translate_to_chinese(chunk, source_language)
+            if translated_chunk:
+                chunks.append(translated_chunk)
+            else:
+                # 如果翻译失败，保留原文
+                chunks.append(chunk)
+
+            # 调用进度回调
+            if progress_callback:
+                progress_callback(len(chunks), total_chunks)
+
+        # 合并所有翻译结果
+        return ''.join(chunks)
