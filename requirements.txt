@@ -10,3 +10,4 @@ chardet
 requests
 openai
 python-dotenv
+edge-tts

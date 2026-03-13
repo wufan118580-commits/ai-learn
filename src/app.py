@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 from document_processor import DocumentProcessor
 from prompt_templates import PromptManager
 from note_generator import NoteGenerator
+from llm_service import DeepSeekService
+from tts_service import TTSService
 import re
 
 # 加载环境变量
@@ -29,6 +31,10 @@ if 'generated_result' not in st.session_state:
     st.session_state.generated_result = None
 if 'last_uploaded_file' not in st.session_state:
     st.session_state.last_uploaded_file = None
+if 'translated_text' not in st.session_state:
+    st.session_state.translated_text = None
+if 'tts_audio_path' not in st.session_state:
+    st.session_state.tts_audio_path = None
 
 
 # 标题
@@ -109,22 +115,115 @@ if uploaded_file:
         except Exception as e:
             st.error(f"❌ 文档处理失败: {str(e)}")
 
-# 生成区域
-st.header("🎯 2. 生成内容")
+# 生成区域 - 两个并列的功能
+st.header("🎯 2. 选择功能")
 st.markdown("---")
 
-# 生成按钮
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
+# 创建两个功能选项卡
+function_tabs = st.tabs(["📚 生成学习笔记", "🔊 翻译语音"])
+
+with function_tabs[0]:
+    st.markdown("### 📚 生成学习笔记和思维导图")
+    st.info("将文档转换为结构化的学习笔记和可视化思维导图")
+
     generate_button = st.button(
         "🚀 生成学习笔记和思维导图",
         type="primary",
         use_container_width=True,
         disabled=not (uploaded_file and api_key),
-        key="generate_button"
+        key="generate_notes_button"
     )
 
-# 结果显示区域
+with function_tabs[1]:
+    st.markdown("### 🔊 翻译文档并生成语音")
+    st.info("将文档翻译为中文，并转换为语音播放")
+
+    # 如果已有翻译结果，显示重新翻译按钮
+    if st.session_state.translated_text:
+        if st.button("🔄 重新翻译", key="retranslate_button"):
+            st.session_state.translated_text = None
+            st.session_state.tts_audio_path = None
+            st.rerun()
+
+    # 翻译语音按钮
+    translate_button = st.button(
+        "🔄 翻译并生成语音",
+        type="primary",
+        use_container_width=True,
+        disabled=not (uploaded_file and api_key),
+        key="translate_tts_button"
+    )
+
+    # 如果已有翻译结果，显示语音配置
+    if st.session_state.translated_text:
+        st.markdown("---")
+        st.success("✅ 已完成翻译，现在配置语音参数：")
+
+        # TTS 配置
+        tts_service = TTSService()
+
+        # 语音选择
+        col1, col2 = st.columns(2)
+        with col1:
+            voice_gender = st.radio("选择声音类型", ["female", "male"], format_func=lambda x: "女声" if x == "female" else "男声")
+        with col2:
+            available_voices = tts_service.get_voices()
+            voice_options = available_voices.get(voice_gender, {})
+            selected_voice = st.selectbox("选择声音", list(voice_options.keys()),
+                                        format_func=lambda x: voice_options[x])
+
+        # 语速和音调
+        col3, col4 = st.columns(2)
+        with col3:
+            rate = st.slider("语速调整", -50, 50, 0, 10, format_func=lambda x: f"{x:+d}%")
+        with col4:
+            pitch = st.slider("音调调整", -10, 10, 0, 1, format_func=lambda x: f"{x:+d}Hz")
+
+        # 生成语音按钮
+        generate_tts_button = st.button(
+            "🎵 生成语音",
+            type="secondary",
+            use_container_width=True,
+            key="generate_tts_button"
+        )
+
+        if generate_tts_button:
+            with st.spinner("🎵 正在生成语音，请稍候..."):
+                try:
+                    tts_text = st.session_state.translated_text[:5000]
+                    audio_path = tts_service.text_to_speech(
+                        text=tts_text,
+                        voice=selected_voice,
+                        rate=f"{rate:+d}%",
+                        pitch=f"{pitch:+d}Hz"
+                    )
+
+                    if audio_path and os.path.exists(audio_path):
+                        st.session_state.tts_audio_path = audio_path
+                        st.success("✅ 语音生成成功！")
+                        st.rerun()
+                    else:
+                        st.error("❌ 语音生成失败")
+                except Exception as e:
+                    st.error(f"❌ 语音生成失败: {str(e)}")
+
+        # 播放音频
+        if st.session_state.tts_audio_path:
+            st.markdown("### 🎧 播放语音")
+            with open(st.session_state.tts_audio_path, 'rb') as audio_file:
+                audio_bytes = audio_file.read()
+            st.audio(audio_bytes, format='audio/mp3')
+
+            with open(st.session_state.tts_audio_path, 'rb') as f:
+                st.download_button(
+                    label="📥 下载音频文件",
+                    data=f,
+                    file_name=os.path.basename(st.session_state.tts_audio_path),
+                    mime="audio/mpeg",
+                    key="download_audio"
+                )
+
+# 处理学习笔记生成
 if generate_button and api_key:
     with st.spinner("🔄 正在处理文档并生成内容..."):
         try:
@@ -152,7 +251,7 @@ if generate_button and api_key:
                 st.session_state.last_uploaded_file = uploaded_file.name
 
                 # 显示结果
-                st.success("✅ 生成完成！")
+                st.success("✅ 学习笔记生成完成！")
 
         except Exception as e:
             st.error(f"❌ 生成失败: {str(e)}")
@@ -160,8 +259,36 @@ if generate_button and api_key:
             with st.expander("查看错误详情"):
                 st.exception(e)
 
-# 显示之前生成的结果（如果有）
+# 处理翻译语音生成
+if translate_button and api_key:
+    with st.spinner("🔄 正在翻译文档..."):
+        try:
+            # 获取文档内容
+            document_text = doc_processor.process_uploaded_file(uploaded_file)
+
+            if not document_text:
+                st.error("❌ 无法提取文档内容")
+            else:
+                # 调用翻译服务
+                llm_service = DeepSeekService(api_key)
+                translated_text = llm_service.translate_document(document_text)
+
+                if translated_text:
+                    st.session_state.translated_text = translated_text
+                    st.session_state.tts_audio_path = None  # 重置音频路径
+                    st.success("✅ 翻译完成！请在下方配置语音参数")
+                    st.rerun()
+                else:
+                    st.error("❌ 翻译失败")
+        except Exception as e:
+            st.error(f"❌ 翻译失败: {str(e)}")
+            with st.expander("查看错误详情"):
+                st.exception(e)
+
+# 显示学习笔记结果区域
 if st.session_state.generated_result:
+    st.header("📊 3. 学习笔记结果")
+    st.markdown("---")
     result = st.session_state.generated_result
 
     # 创建结果显示区域
@@ -228,6 +355,19 @@ if st.session_state.generated_result:
     with result_tabs[2]:
         st.markdown("### 📝 完整输出")
         st.markdown(result.get('md', '无内容'))
+
+# 显示翻译结果区域
+if st.session_state.translated_text:
+    st.header("🔊 3. 翻译语音结果")
+    st.markdown("---")
+
+    # 显示翻译文本
+    st.success("✅ 翻译完成")
+    with st.expander("📄 查看翻译文本", expanded=False):
+        st.markdown(st.session_state.translated_text[:5000] +
+                   ("..." if len(st.session_state.translated_text) > 5000 else ""))
+
+    st.markdown("---")
 
 # 底部信息
 st.markdown("---")
