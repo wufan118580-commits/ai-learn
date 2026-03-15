@@ -186,3 +186,82 @@ class DeepSeekService:
 
         # 合并所有翻译结果
         return ''.join(chunks)
+
+    def analyze_media_suggestions(self, text: str) -> list:
+        """
+        分析文本，为适合配图的片段提供素材建议
+
+        Args:
+            text: 要分析的中文文本
+
+        Returns:
+            媒体建议列表，每个元素包含：
+            - text: 文本片段
+            - media_type: 'search' (搜索) 或 'generate' (生成)
+            - keywords: 搜索关键词或生成提示词
+            - reason: 选择该类型的理由
+        """
+        prompt = f"""请分析以下中文文本，找出适合搭配图片或视频素材的文本片段，并为每个片段提供素材建议。
+
+原文内容：
+{text[:15000]}
+
+分析要求：
+1. 只选择那些需要视觉辅助才能更好理解的片段
+2. 判断该片段适合：
+   - "search": 搜索现成素材（名人、著名建筑、历史事件、已知事物、地理景观等）
+   - "generate": AI生成图片（抽象概念、想象场景、未来科技、情感表达、创意插图等）
+3. 为每个片段提供：
+   - text: 原文本片段（保持原样）
+   - media_type: "search" 或 "generate"
+   - keywords:
+     - 如果是search: 提供2-4个搜索关键词（中英文）
+     - 如果是generate: 提供详细的AI生成提示词（中文，包含风格、细节、氛围等）
+   - reason: 选择该类型的理由（简短说明）
+
+输出格式（纯JSON，不要包含其他文字）：
+{{
+  "suggestions": [
+    {{
+      "text": "文本片段",
+      "media_type": "search",
+      "keywords": ["关键词1", "keyword2"],
+      "reason": "适合搜索的理由"
+    }},
+    {{
+      "text": "文本片段",
+      "media_type": "generate",
+      "keywords": "详细的英文提示词，描述画面内容、风格、细节等",
+      "reason": "适合生成的理由"
+    }}
+  ]
+}}
+
+注意：
+- 每个建议的text应该是一个完整的句子或段落，不要太短也不要太长
+- 选择5-10个最需要配图的片段
+- JSON格式必须正确，可以被直接解析"""
+
+        try:
+            response = self.client.chat.completions.create(
+                model=DEEPSEEK_MODEL,
+                messages=[
+                    {"role": "system",
+                     "content": "你是一位专业的多媒体内容策划师，擅长分析文本并找出需要视觉辅助的内容。请严格按照JSON格式返回结果，不要包含任何其他文字。"},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.5,
+                max_tokens=4000,
+                response_format={"type": "json_object"}
+            )
+
+            result = response.choices[0].message.content
+            data = json.loads(result)
+            return data.get("suggestions", [])
+
+        except json.JSONDecodeError as e:
+            print(f"JSON解析失败: {e}")
+            return []
+        except Exception as e:
+            print(f"分析媒体建议失败: {e}")
+            return []
