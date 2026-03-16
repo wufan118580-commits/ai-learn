@@ -23,6 +23,9 @@ class NoteGenerator:
         # print(f"生成学习笔记完成: {notes}")
         # 后处理结果
         result = {}
+        # 0. 保存标题建议
+        if 'suggested_titles' in notes:
+            result['suggested_titles'] = notes['suggested_titles']
         # 1. 格式化单个文档笔记为Markdown
         result['md'] = self._format_document_notes_md(notes)
         # print(result['md'])
@@ -67,6 +70,19 @@ class NoteGenerator:
         filename = notes.get('filename', '未知文档')
 
         md = f"""# 📝 学习笔记: {filename}
+
+## 📌 标题建议
+"""
+
+        # 添加标题建议
+        suggested_titles = notes.get('suggested_titles', [])
+        if suggested_titles and isinstance(suggested_titles, list):
+            for i, title in enumerate(suggested_titles, 1):
+                md += f"{i}. {title}\n"
+        else:
+            md += "暂无标题建议\n"
+
+        md += f"""
 
 ## 📋 文档概述
 {notes.get('document_overview', '无概述')}
