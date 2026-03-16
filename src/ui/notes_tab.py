@@ -34,6 +34,14 @@ def render_notes_results(result, uploaded_file_name):
     if 'edited_notes' not in st.session_state:
         st.session_state.edited_notes = None
 
+    # 显示标题建议
+    if 'suggested_titles' in result and result['suggested_titles']:
+        st.markdown("### 📌 标题建议")
+        st.info("💡 以下是基于文档内容生成的标题建议，您可以选择一个作为学习笔记的标题")
+        for i, title in enumerate(result['suggested_titles'], 1):
+            st.markdown(f"**{i}.** {title}")
+        st.markdown("---")
+
     # 创建结果显示区域
     result_tabs = st.tabs(["📖 学习笔记", "🧠 思维导图", "📝 完整输出"])
 
