@@ -1,8 +1,9 @@
 from typing import List, Optional
 
+
 class PromptManager:
     """管理提示词模板"""
-    
+
     DEFAULT_TEMPLATES = {
         "学习笔记": """请基于以下学习材料，生成一份完整的学习笔记，包含标题建议、详细的知识梳理和Mermaid格式的知识图谱：
 内容长度: {content_length} 字符
@@ -47,27 +48,29 @@ class PromptManager:
 1. suggested_titles字段包含3-5个标题建议
 2. knowledge_graph字段包含完整的Mermaid代码块（包括```mermaid```标记）"""
     }
-    
+
     def __init__(self):
         self.templates = self.DEFAULT_TEMPLATES.copy()
-    
+
     def get_template_names(self) -> List[str]:
         """获取所有模板名称"""
         return list(self.templates.keys())
-    
+
     def get_template(self, name: str) -> str:
         """获取指定模板"""
         return self.templates.get(name, "")
-    
+
     def add_template(self, name: str, template: str) -> None:
         """添加自定义模板"""
         self.templates[name] = template
-    
-    def format_prompt(self, template_name: str, document_text: str, custom_prompt: Optional[str] = None) -> str:
+
+    def format_prompt(self, template_name: str, document_text: str,
+                     custom_prompt: Optional[str] = None) -> str:
         """格式化提示词"""
         if custom_prompt:
             # 使用自定义提示词
             return custom_prompt.replace("{document_text}", document_text)
         # 使用内置模板
         template = self.get_template(template_name)
-        return template.format(document_text=document_text, content_length=len(document_text))
+        return template.format(document_text=document_text,
+                               content_length=len(document_text))
