@@ -40,12 +40,14 @@ def init_session_state():
         'generated_result': None,
         'last_uploaded_file': None,
         'translated_text': None,
+        'polished_text': None,
         'tts_audio_path': None,
         'media_suggestions': None,
         'edit_mode': False,
         'edited_notes': None,
         'api_key': None,
-        'uploaded_file': None
+        'uploaded_file': None,
+        'show_polish_options': False
     }
     for key, default_value in state_vars.items():
         if key not in st.session_state:
@@ -148,7 +150,7 @@ with function_tabs[0]:
 
 # 翻译语音 Tab
 with function_tabs[1]:
-    translate_button, voice, rate, pitch = render_translation_tab(
+    translate_button, voice, rate, pitch, polish_button, polish_style = render_translation_tab(
         st.session_state.last_uploaded_file or (uploaded_file.name if uploaded_file else "")
     )
 
@@ -210,6 +212,28 @@ if translate_button and st.session_state.api_key:
                     show_error("翻译失败")
         except Exception as e:
             show_error(f"翻译失败: {str(e)}", show_details=True, exception=e)
+
+
+# 处理文本润色
+if polish_button and st.session_state.api_key:
+    with show_spinner("正在润色文本..."):
+        try:
+            translation_handler = TranslationHandler()
+            polished_text = translation_handler.polish_text(
+                st.session_state.translated_text,
+                st.session_state.api_key,
+                polish_style
+            )
+
+            if polished_text:
+                st.session_state.polished_text = polished_text
+                st.session_state.show_polish_options = False
+                show_success("润色完成！")
+                st.rerun()
+            else:
+                show_error("润色失败")
+        except Exception as e:
+            show_error(f"润色失败: {str(e)}", show_details=True, exception=e)
 
 
 # 处理语音生成
