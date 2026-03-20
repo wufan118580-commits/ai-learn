@@ -265,3 +265,64 @@ class DeepSeekService:
         except Exception as e:
             print(f"分析媒体建议失败: {e}")
             return []
+
+    def polish_text(self, text: str, style: str = "social_media"):
+        """
+        润色文本，使其更适合传播
+
+        Args:
+            text: 要润色的文本
+            style: 润色风格，可选 "social_media"（社交媒体）或 "narrative"（叙事）
+
+        Returns:
+            润色后的文本
+        """
+        if style == "social_media":
+            prompt = f"""请将以下文本润色成更适合社交媒体传播的风格。
+
+要求：
+1. 保持原文的所有观点和科学知识，不得改变核心内容
+2. 使用更生动、吸引人的语言
+3. 适当加入一些情感表达和互动性语言
+4. 优化句子结构，使其朗朗上口，适合朗读
+5. 添加一些能引起共鸣的表达方式
+6. 控制篇幅，保持简洁有力
+7. 使用更贴近大众的语言，避免过于学术化的表达
+8. 可以适当使用感叹号、问号等增强语气
+9. 保持逻辑清晰，便于理解
+
+原文内容：
+{text}
+
+请直接返回润色后的文本，不要包含任何解释或说明。"""
+
+        else:  # narrative
+            prompt = f"""请将以下文本润色成更适合叙事的风格。
+
+要求：
+1. 保持原文的所有观点和科学知识，不得改变核心内容
+2. 使用更具故事性的表达方式
+3. 优化句子结构，使文章流畅易读
+4. 适当加入一些连接词和过渡语
+5. 使用更生动的语言，增强可读性
+
+原文内容：
+{text}
+
+请直接返回润色后的文本，不要包含任何解释或说明。"""
+
+        try:
+            response = self.client.chat.completions.create(
+                model=DEEPSEEK_MODEL,
+                messages=[
+                    {"role": "system",
+                     "content": "你是一位专业的文案编辑，擅长将各种文本改写成更适合传播的风格。"},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7,
+                max_tokens=6000
+            )
+            return response.choices[0].message.content.strip()
+        except Exception as e:
+            print(f"润色失败: {e}")
+            return None
