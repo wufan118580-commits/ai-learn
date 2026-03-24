@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>电动螺旋压力机 - 三维结构图 | 零部件标注详解</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Microsoft YaHei', 'Segoe UI', 'PingFang SC', 'Roboto', 'Noto Sans', sans-serif;
+        }
+        
+        /* 标题面板 */
+        .title-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(12px);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 16px;
+            z-index: 20;
+            pointer-events: none;
+            border-left: 5px solid #ff8844;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            font-family: monospace;
+        }
+        .title-panel h1 {
+            margin: 0 0 5px;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+        }
+        .title-panel p {
+            margin: 0;
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+        
+        /* 右侧图例说明 */
+        .legend-panel {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(8px);
+            padding: 10px 15px;
+            border-radius: 12px;
+            color: #ddd;
+            font-size: 11px;
+            z-index: 20;
+            pointer-events: none;
+            text-align: right;
+            font-family: monospace;
+            border-right: 2px solid #ff8844;
+            max-width: 220px;
+        }
+        .legend-panel span {
+            color: #ffaa66;
+        }
+        .instruction {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.5);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            color: #ccc;
+            z-index: 20;
+            pointer-events: none;
+            font-family: monospace;
+        }
+        
+        /* 右侧部件列表快速索引（可选，增强学习） */
+        .parts-list {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            border-radius: 16px;
+            padding: 10px 15px;
+            width: 180px;
+            z-index: 20;
+            pointer-events: none;
+            font-size: 11px;
+            border-top: 2px solid #ff8844;
+            font-family: monospace;
+            color: #eee;
+        }
+        .parts-list h4 {
+            margin: 0 0 8px;
+            text-align: center;
+            color: #ffaa66;
+        }
+        .parts-list ul {
+            margin: 0;
+            padding-left: 18px;
+        }
+        .parts-list li {
+            line-height: 1.5;
+            list-style-type: square;
+            color: #bbccff;
+        }
+        
+        @media (max-width: 700px) {
+            .parts-list { display: none; }
+            .legend-panel { font-size: 9px; max-width: 170px; }
+            .title-panel { top: 10px; left: 10px; padding: 6px 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="title-panel">
+        <h1>🔧 电动螺旋压力机 | 三维结构分解图 (齿轮-机械传动式)</h1>
+        <p>飞轮储能 • 螺旋副传动 • 关键零部件标注 | 鼠标拖拽旋转视角 | 帮助初学者全面认知设备结构</p>
+    </div>
+    <div class="parts-list">
+        <h4>📌 核心部件索引</h4>
+        <ul>
+            <li>1. 机架 / 立柱</li>
+            <li>2. 飞轮 (大齿轮)</li>
+            <li>3. 驱动电机 & 小齿轮</li>
+            <li>4. 螺旋副 (螺杆+螺母)</li>
+            <li>5. 滑块 & 上模</li>
+            <li>6. 制动器 (碟簧式)</li>
+            <li>7. 平衡缸 (气压缸)</li>
+            <li>8. 工作台 & 下模</li>
+            <li>9. 导轨 (导向面)</li>
+            <li>10. 推力轴承 & 顶料器</li>
+        </ul>
+    </div>
+    <div class="legend-panel">
+        🟠 <span>飞轮/电机</span> &nbsp; 🔴 <span>滑块/模具</span><br>
+        🔵 <span>螺旋副/传动</span> &nbsp; 🟢 <span>制动/平衡系统</span><br>
+        ⚪ <span>机架/结构件</span> &nbsp; 💡 文字标签为部件名
+    </div>
+    <div class="instruction">
+        🖱️ 鼠标拖拽旋转视角 | 右键平移 | 滚动缩放 | 全方位观察压力机结构
+    </div>
+
+    <!-- 引入Three.js核心库及扩展 -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+        // --- 初始化场景、相机、渲染器 ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x071a2b); // 深科技蓝黑色
+        scene.fog = new THREE.FogExp2(0x071a2b, 0.012);
+        
+        // 相机: 角度便于观察整体及内部
+        const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(5.5, 3.8, 6.2);
+        camera.lookAt(0, 1.4, 0);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+        
+        // CSS2渲染文字标签 (始终面向相机)
+        const labelRenderer = new CSS2DRenderer();
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.domElement.style.position = 'absolute';
+        labelRenderer.domElement.style.top = '0px';
+        labelRenderer.domElement.style.left = '0px';
+        labelRenderer.domElement.style.pointerEvents = 'none';
+        document.body.appendChild(labelRenderer.domElement);
+        
+        // --- 灯光系统 (突出立体感和金属质感) ---
+        const ambientLight = new THREE.AmbientLight(0x3a4a6e);
+        scene.add(ambientLight);
+        
+        // 主光源方向光
+        const mainLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        mainLight.position.set(3, 5, 2);
+        mainLight.castShadow = true;
+        mainLight.receiveShadow = true;
+        mainLight.shadow.mapSize.width = 1024;
+        mainLight.shadow.mapSize.height = 1024;
+        scene.add(mainLight);
+        
+        // 补光 - 暖色背光
+        const backLight = new THREE.DirectionalLight(0xffaa66, 0.5);
+        backLight.position.set(-2, 2, -3);
+        scene.add(backLight);
+        
+        // 冷色侧补光
+        const fillLight = new THREE.PointLight(0x88aaff, 0.4);
+        fillLight.position.set(1, 1.5, 2);
+        scene.add(fillLight);
+        
+        // 底部暖光烘托
+        const rimLight = new THREE.PointLight(0xcc8844, 0.35);
+        rimLight.position.set(0, -0.5, 1);
+        scene.add(rimLight);
+        
+        // 辅助网格地面 (半透明参考)
+        const gridHelper = new THREE.GridHelper(12, 20, 0x88aaff, 0x336699);
+        gridHelper.position.y = -0.85;
+        gridHelper.material.transparent = true;
+        gridHelper.material.opacity = 0.3;
+        scene.add(gridHelper);
+        
+        // 简单反射地板
+        const planeMat = new THREE.MeshStandardMaterial({ color: 0x112a44, roughness: 0.5, metalness: 0.2, transparent: true, opacity: 0.25 });
+        const groundPlane = new THREE.Mesh(new THREE.PlaneGeometry(9, 7), planeMat);
+        groundPlane.rotation.x = -Math.PI / 2;
+        groundPlane.position.y = -0.82;
+        groundPlane.receiveShadow = true;
+        scene.add(groundPlane);
+        
+        // --- 辅助创建文字标签的函数 ---
+        function createLabel(text, color, position, fontSize = '14px', bgOpacity = 0.7, offsetY = 0) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            div.style.color = color;
+            div.style.fontSize = fontSize;
+            div.style.fontWeight = 'bold';
+            div.style.fontFamily = 'monospace';
+            div.style.background = `rgba(10, 20, 35, ${bgOpacity})`;
+            div.style.padding = '4px 12px';
+            div.style.borderRadius = '24px';
+            div.style.borderLeft = `3px solid ${color}`;
+            div.style.borderBottom = `1px solid ${color}`;
+            div.style.backdropFilter = 'blur(4px)';
+            div.style.whiteSpace = 'nowrap';
+            div.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
+            const label = new CSS2DObject(div);
+            label.position.copy(position);
+            scene.add(label);
+            return label;
+        }
+        
+        // ================= 构建电动螺旋压力机详细模型 =================
+        // 材质定义
+        const frameMat = new THREE.MeshStandardMaterial({ color: 0x8a9db0, metalness: 0.65, roughness: 0.35 });
+        const darkMetalMat = new THREE.MeshStandardMaterial({ color: 0x6c7e8e, metalness: 0.7, roughness: 0.4 });
+        const accentMat = new THREE.MeshStandardMaterial({ color: 0xcc8855, metalness: 0.8, roughness: 0.2 });
+        const flywheelMat = new THREE.MeshStandardMaterial({ color: 0xdd9966, metalness: 0.85, roughness: 0.2, emissive: 0x331100 });
+        const sliderMat = new THREE.MeshStandardMaterial({ color: 0xbd6a3a, metalness: 0.4, roughness: 0.5 });
+        const screwMat = new THREE.MeshStandardMaterial({ color: 0xcbac77, metalness: 0.7, roughness: 0.3 });
+        const brakeMat = new THREE.MeshStandardMaterial({ color: 0xaa7a55, metalness: 0.5 });
+        const balanceMat = new THREE.MeshStandardMaterial({ color: 0x6a9bcb, metalness: 0.3 });
+        
+        // 1. 机架主体 (左右立柱 + 横梁 + 底座)
+        const leftColumn = new THREE.Mesh(new THREE.BoxGeometry(0.7, 4.0, 1.0), frameMat);
+        leftColumn.position.set(-2.0, 0.6, 0);
+        leftColumn.castShadow = true;
+        leftColumn.receiveShadow = true;
+        const rightColumn = new THREE.Mesh(new THREE.BoxGeometry(0.7, 4.0, 1.0), frameMat);
+        rightColumn.position.set(2.0, 0.6, 0);
+        rightColumn.castShadow = true;
+        const topBeam = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.55, 1.4), frameMat);
+        topBeam.position.set(0, 2.55, 0);
+        topBeam.castShadow = true;
+        const basePlate = new THREE.Mesh(new THREE.BoxGeometry(5.0, 0.35, 2.8), darkMetalMat);
+        basePlate.position.set(0, -0.68, 0);
+        basePlate.receiveShadow = true;
+        scene.add(leftColumn, rightColumn, topBeam, basePlate);
+        
+        // 后部加强筋
+        const backBeam = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.4, 0.6), frameMat);
+        backBeam.position.set(0, 1.6, -0.9);
+        scene.add(backBeam);
+        
+        // 2. 飞轮 (大齿轮) 位置顶部后方
+        const flywheelGroup = new THREE.Group();
+        const wheelGeo = new THREE.CylinderGeometry(1.35, 1.35, 0.5, 80);
+        const flywheelMain = new THREE.Mesh(wheelGeo, flywheelMat);
+        flywheelMain.castShadow = true;
+        flywheelGroup.add(flywheelMain);
+        // 齿圈细节
+        const teethRing = new THREE.Mesh(new THREE.TorusGeometry(1.42, 0.09, 48, 140), new THREE.MeshStandardMaterial({ color: 0xccaa77, metalness: 0.9 }));
+        teethRing.rotation.x = Math.PI / 2;
+        flywheelGroup.add(teethRing);
+        flywheelGroup.position.set(0, 2.2, 1.3);
+        scene.add(flywheelGroup);
+        
+        // 3. 驱动电机 + 小齿轮
+        const motorGroup = new THREE.Group();
+        const motorBody = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.9, 1.2), new THREE.MeshStandardMaterial({ color: 0xbb7a55, metalness: 0.6 }));
+        motorBody.castShadow = true;
+        motorGroup.add(motorBody);
+        const pinionGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.5, 32);
+        const pinionMat = new THREE.MeshStandardMaterial({ color: 0xcc9966, metalness: 0.8 });
+        const pinion = new THREE.Mesh(pinionGeo, pinionMat);
+        pinion.rotation.x = Math.PI / 2;
+        pinion.position.set(0.7, 0.1, 0.65);
+        motorGroup.add(pinion);
+        motorGroup.position.set(1.7, 1.7, 1.5);
+        scene.add(motorGroup);
+        
+        // 4. 螺旋副组件 (螺杆 + 螺母示意)
+        const screwGroup = new THREE.Group();
+        const screwShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 2.4, 24), screwMat);
+        screwShaft.castShadow = true;
+        screwGroup.add(screwShaft);
+        // 螺纹装饰环
+        for (let i = -0.8; i <= 0.8; i+=0.5) {
+            const ring = new THREE.Mesh(new THREE.TorusGeometry(0.33, 0.05, 16, 32), new THREE.MeshStandardMaterial({ color: 0xddbb99 }));
+            ring.rotation.x = Math.PI / 2;
+            ring.position.y = i;
+            screwGroup.add(ring);
+        }
+        screwGroup.position.set(0, 0.5, 0);
+        scene.add(screwGroup);
+        
+        // 5. 滑块组件 (运动部件，为了展示结构放在中间高度)
+        const sliderGroup = new THREE.Group();
+        const sliderBlock = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.8, 1.6), sliderMat);
+        sliderBlock.castShadow = true;
+        sliderBlock.receiveShadow = true;
+        sliderGroup.add(sliderBlock);
+        // 上模座
+        const topDie = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.25, 1.3), new THREE.MeshStandardMaterial({ color: 0xaa7755, metalness: 0.4 }));
+        topDie.position.y = -0.5;
+        topDie.castShadow = true;
+        sliderGroup.add(topDie);
+        sliderGroup.position.set(0, 0.15, 0);
+        scene.add(sliderGroup);
+        
+        // 下模 / 工作台
+        const bottomDie = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.28, 1.5), new THREE.MeshStandardMaterial({ color: 0xaa7755, metalness: 0.45 }));
+        bottomDie.position.set(0, -0.55, 0);
+        bottomDie.receiveShadow = true;
+        scene.add(bottomDie);
+        
+        // 工作台垫板
+        const bolster = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.2, 2.0), new THREE.MeshStandardMaterial({ color: 0x6a6a6a, metalness: 0.3 }));
+        bolster.position.set(0, -0.72, 0);
+        bolster.receiveShadow = true;
+        scene.add(bolster);
+        
+        // 6. 导轨 (左右导向)
+        const railMatMetal = new THREE.MeshStandardMaterial({ color: 0xbcac8a, metalness: 0.6 });
+        const leftRail = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2.5, 0.35), railMatMetal);
+        leftRail.position.set(-1.3, 0.2, 1.1);
+        const rightRail = new THREE.Mesh(new THREE.BoxGeometry(0.2, 2.5, 0.35), railMatMetal);
+        rightRail.position.set(1.3, 0.2, 1.1);
+        scene.add(leftRail, rightRail);
+        
+        // 7. 制动器组件 (左右各两个制动单元示意)
+        const brakeLeft1 = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.45, 0.7), brakeMat);
+        brakeLeft1.position.set(-1.5, 2.05, 1.25);
+        const brakeRight1 = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.45, 0.7), brakeMat);
+        brakeRight1.position.set(1.5, 2.05, 1.25);
+        const brakeLeft2 = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.45, 0.7), brakeMat);
+        brakeLeft2.position.set(-1.5, 1.45, 1.25);
+        const brakeRight2 = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.45, 0.7), brakeMat);
+        brakeRight2.position.set(1.5, 1.45, 1.25);
+        scene.add(brakeLeft1, brakeRight1, brakeLeft2, brakeRight2);
+        
+        // 8. 平衡缸 (气动平衡缸，左右两侧)
+        const balanceLeft = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 1.0, 16), balanceMat);
+        balanceLeft.position.set(-1.5, 1.2, -0.85);
+        balanceLeft.rotation.z = 0.15;
+        const balanceRight = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 1.0, 16), balanceMat);
+        balanceRight.position.set(1.5, 1.2, -0.85);
+        balanceRight.rotation.z = -0.15;
+        scene.add(balanceLeft, balanceRight);
+        
+        // 9. 推力轴承示意 (顶部螺旋副支撑)
+        const thrustBearing = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.25, 24), new THREE.MeshStandardMaterial({ color: 0xbc9a6a, metalness: 0.7 }));
+        thrustBearing.position.set(0, 2.25, 0.2);
+        scene.add(thrustBearing);
+        
+        // 10. 顶料器 (下顶料示意)
+        const ejectorRod = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.6, 8), new THREE.MeshStandardMaterial({ color: 0xccaa88 }));
+        ejectorRod.position.set(0, -0.95, 0.45);
+        scene.add(ejectorRod);
+        const ejectorPlate = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.08, 0.4), new THREE.MeshStandardMaterial({ color: 0xaa8866 }));
+        ejectorPlate.position.set(0, -0.63, 0.45);
+        scene.add(ejectorPlate);
+        
+        // 添加液压管路示意 (简单的圆柱曲线)
+        const tubeMat = new THREE.MeshStandardMaterial({ color: 0xaa8866 });
+        const tubePoints = [
+            [-1.2, 1.85, 1.4], [-0.8, 1.9, 1.45], [-0.3, 1.9, 1.45], [0, 1.85, 1.4]
+        ];
+        tubePoints.forEach(pos => {
+            const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.2, 6), tubeMat);
+            tube.position.set(pos[0], pos[1], pos[2]);
+            scene.add(tube);
+        });
+        
+        // ============= 添加所有零部件的 CSS2D 文字标签 =============
+        createLabel('🏛️ 机架 / 立柱', '#bbddff', new THREE.Vector3(-2.4, 1.5, -0.2), '13px', 0.65);
+        createLabel('🏛️ 右立柱', '#bbddff', new THREE.Vector3(2.4, 1.5, -0.2), '12px', 0.65);
+        createLabel('横梁', '#bbddff', new THREE.Vector3(0, 2.9, 0.6), '12px', 0.6);
+        createLabel('⚙️ 飞轮 (大齿轮/储能)', '#ffaa66', new THREE.Vector3(0, 2.95, 1.8), '14px', 0.7);
+        createLabel('🔌 驱动电机', '#ffaa66', new THREE.Vector3(2.3, 1.9, 1.9), '12px', 0.65);
+        createLabel('⚙️ 小齿轮', '#ffaa66', new THREE.Vector3(2.4, 1.4, 2.0), '11px', 0.6);
+        createLabel('🔩 螺旋副 (螺杆+螺母)', '#88ccff', new THREE.Vector3(0.6, 1.4, 0.8), '13px', 0.7);
+        createLabel('🔴 滑块', '#ff8866', new THREE.Vector3(0, -0.1, 1.3), '13px', 0.65);
+        createLabel('上模', '#ffaa88', new THREE.Vector3(0, -0.55, 1.45), '11px', 0.6);
+        createLabel('下模 / 工作台', '#ffaa88', new THREE.Vector3(0, -0.9, 1.4), '12px', 0.6);
+        createLabel('🟢 制动器 (碟簧式)', '#88ffaa', new THREE.Vector3(-1.8, 2.25, 1.6), '12px', 0.7);
+        createLabel('制动器单元', '#88ffaa', new THREE.Vector3(1.9, 2.25, 1.6), '11px', 0.6);
+        createLabel('🟦 平衡缸 (气压缸)', '#88aaff', new THREE.Vector3(-2.0, 1.3, -1.0), '12px', 0.65);
+        createLabel('平衡缸', '#88aaff', new THREE.Vector3(2.0, 1.3, -1.0), '11px', 0.6);
+        createLabel('导轨 / 导向面', '#aaccff', new THREE.Vector3(-1.7, 0.8, 1.3), '11px', 0.6);
+        createLabel('导轨', '#aaccff', new THREE.Vector3(1.7, 0.8, 1.3), '11px', 0.6);
+        createLabel('推力轴承', '#ddaa88', new THREE.Vector3(0, 2.6, 0.7), '11px', 0.6);
+        createLabel('顶料器 (下顶料)', '#ccaa77', new THREE.Vector3(0, -1.05, 0.9), '11px', 0.6);
+        createLabel('液压管路', '#cc9966', new THREE.Vector3(-1.0, 2.1, 1.8), '10px', 0.55);
+        createLabel('底座', '#99aacc', new THREE.Vector3(0, -1.05, -0.8), '11px', 0.6);
+        
+        // 额外标注关键连接点: 电机与飞轮传动示意
+        const arrowDiv = document.createElement('div');
+        arrowDiv.textContent = '⚡ 齿轮传动 ⚡';
+        arrowDiv.style.color = '#ffaa66';
+        arrowDiv.style.fontSize = '10px';
+        arrowDiv.style.fontWeight = 'bold';
+        arrowDiv.style.background = 'rgba(0,0,0,0.5)';
+        arrowDiv.style.padding = '2px 6px';
+        arrowDiv.style.borderRadius = '12px';
+        const arrowLabel = new CSS2DObject(arrowDiv);
+        arrowLabel.position.set(1.0, 1.9, 1.7);
+        scene.add(arrowLabel);
+        
+        // 添加辅助高亮环: 螺旋副区域加强显示
+        const glowRing = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.03, 16, 48), new THREE.MeshStandardMaterial({ color: 0xffaa66, emissive: 0x442200 }));
+        glowRing.rotation.x = Math.PI / 2;
+        glowRing.position.set(0, 1.3, 0.25);
+        scene.add(glowRing);
+        
+        // 增加一些浮动粒子增加科技感 (辅助视觉效果)
+        const particleCount = 400;
+        const particleGeo = new THREE.BufferGeometry();
+        const particlePositions = new Float32Array(particleCount * 3);
+        for (let i = 0; i < particleCount; i++) {
+            particlePositions[i*3] = (Math.random() - 0.5) * 7;
+            particlePositions[i*3+1] = Math.random() * 4 - 0.5;
+            particlePositions[i*3+2] = (Math.random() - 0.5) * 5 - 1;
+        }
+        particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+        const particleMatEffect = new THREE.PointsMaterial({ color: 0x88aaff, size: 0.02, transparent: true, opacity: 0.4 });
+        const particlesSys = new THREE.Points(particleGeo, particleMatEffect);
+        scene.add(particlesSys);
+        
+        // 简单的旋转动画让飞轮和电机缓慢自转 (增加生动性)
+        let time = 0;
+        
+        // --- 轨道控制，允许用户自由观察 ---
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.06;
+        controls.rotateSpeed = 1.2;
+        controls.zoomSpeed = 1.2;
+        controls.panSpeed = 0.8;
+        controls.target.set(0, 1.2, 0);
+        
+        // 辅助: 添加一个很 subtle 的轮廓光晕效果
+        const ambientGlow = new THREE.AmbientLight(0x2a4a6a, 0.25);
+        scene.add(ambientGlow);
+        
+        // 简单动画: 飞轮缓慢旋转，电机齿轮自转，平衡缸活塞微动 (只是为了体现结构生动)
+        let balanceOffset = 0;
+        
+        // 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.012;
+            
+            // 飞轮缓慢自转，展示动态效果
+            flywheelGroup.rotation.z = Math.sin(time * 0.3) * 0.2 + time * 0.4;
+            // 电机齿轮自转
+            if (motorGroup.children[1]) motorGroup.children[1].rotation.x = time * 2.5;
+            // 平衡缸活塞微动 (视觉效果)
+            const scaleY = 0.95 + Math.sin(time * 3) * 0.03;
+            balanceLeft.scale.set(1, scaleY, 1);
+            balanceRight.scale.set(1, scaleY, 1);
+            // 推力轴承微弱高亮
+            thrustBearing.material.emissiveIntensity = 0.15 + Math.sin(time * 2) * 0.05;
+            
+            controls.update(); // 更新相机控制
+            renderer.render(scene, camera);
+            labelRenderer.render(scene, camera);
+        }
+        
+        animate();
+        
+        // 窗口适配
+        window.addEventListener('resize', onWindowResize, false);
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        // 控制台输出帮助信息
+        console.log('电动螺旋压力机三维结构展示 | 所有主要零部件均配有中文标签 | 支持鼠标交互学习');
+    </script>
+</body>
+</html>
