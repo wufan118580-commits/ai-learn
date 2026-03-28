@@ -15,10 +15,23 @@ services:
     volumes:
       # HTML 文件持久化存储
       - html_data:/app/html_storage
+      # 公式识别历史记录持久化存储
+      - formula_data:/app/formula_history
       # 可选：配置文件持久化
       - ./config:/app/config
+    # 资源限制 - 适配CPU4核8G环境
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+          cpus: '3.5'
+        reservations:
+          memory: 2G
+          cpus: '1'
     restart: unless-stopped
 
 volumes:
   html_data:
+    driver: local
+  formula_data:
     driver: local

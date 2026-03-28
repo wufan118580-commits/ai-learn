@@ -1,15 +1,19 @@
 # 使用官方 Python 轻量级镜像
 # https://hub.docker.com/_/python
-FROM python:3-alpine
+FROM python:3.11-slim
 
-# 容器默认时区为UTC，如需使用上海时间请启用以下时区设置命令
 # 设置时区，容器默认时区为UTC
-RUN apk add tzdata && \
-    cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
-    echo Asia/Shanghai > /etc/timezone
+ENV TZ=Asia/Shanghai
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 ENV APP_HOME /app
 WORKDIR $APP_HOME
+
+# 安装系统依赖
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
 
 # 将本地代码拷贝到容器内
 COPY . .
@@ -18,6 +22,9 @@ COPY . .
 ENV PYTHONUNBUFFERED=1
 ENV STREAMLIT_SERVER_PORT=8501
 ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
+# 禁用OpenCV的GUI功能（在无GUI环境中）
+ENV QT_QPA_PLATFORM=offscreen
+ENV OPENCV_IO_ENABLE_OPENEXR=1
 
 # 安装依赖
 # 选用国内镜像源以提高下载速度

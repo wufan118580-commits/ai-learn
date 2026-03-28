@@ -1,9 +1,16 @@
 """
 文档学习助手 - Streamlit 应用主入口
 """
-import streamlit as st
 import os
+import warnings
+import streamlit as st
 from dotenv import load_dotenv
+
+# 抑制非关键警告
+warnings.filterwarnings('ignore', category=FutureWarning)
+warnings.filterwarnings('ignore', category=UserWarning, module='albumentations')
+warnings.filterwarnings('ignore', category=UserWarning, module='pydantic')
+os.environ['XDG_RUNTIME_DIR'] = '/tmp/runtime-root'
 
 # 加载环境变量
 load_dotenv()
@@ -20,6 +27,7 @@ from ui.components import show_error, show_success, show_warning, show_spinner
 from ui.notes_tab import render_notes_results
 from ui.media_tab import render_media_results
 from ui.html_tab import render_html_tab
+from ui.formula_tab import render_formula_tab
 from ui.home_page import render_home_page
 
 
@@ -114,8 +122,8 @@ if 'page' not in st.session_state:
 
 page = st.sidebar.radio(
     "📌 页面导航",
-    ["🏠 首页", "📚 文档学习", "📄 HTML 管理"],
-    index=["🏠 首页", "📚 文档学习", "📄 HTML 管理"].index(st.session_state.page) if st.session_state.page in ["🏠 首页", "📚 文档学习", "📄 HTML 管理"] else 0
+    ["🏠 首页", "📚 文档学习", "📐 公式识别", "📄 HTML 管理"],
+    index=["🏠 首页", "📚 文档学习", "📐 公式识别", "📄 HTML 管理"].index(st.session_state.page) if st.session_state.page in ["🏠 首页", "📚 文档学习", "📐 公式识别", "📄 HTML 管理"] else 0
 )
 
 # 更新 session state 中的页面
@@ -475,6 +483,11 @@ elif page == "📚 文档学习":
         if st.session_state.media_suggestions:
             st.markdown("---")
             render_media_results()
+
+
+# 公式识别页面
+elif page == "📐 公式识别":
+    render_formula_tab()
 
 
 # HTML 管理页面

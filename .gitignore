@@ -144,6 +144,10 @@ ENV/
 env.bak/
 venv.bak/
 
+# Project specific
+html_storage/
+formula_history/
+
 # Spyder project settings
 .spyderproject
 .spyproject

@@ -1,6 +1,6 @@
 # 文档学习助手
 
-一个功能强大的文档学习和处理工具，支持学习笔记生成、翻译语音、媒材建议和 HTML 管理。
+一个功能强大的文档学习和处理工具，支持学习笔记生成、翻译语音、媒材建议、公式识别和 HTML 管理。
 
 ## 功能特性
 
@@ -27,6 +27,13 @@
 - 提供配图搜索建议
 - 提供 AI 生成图片的提示词
 - 支持使用原文或翻译文本
+
+### 📐 公式识别
+- 上传包含数学公式的截图
+- 自动识别并转换为 LaTeX 格式
+- 支持公式预览和渲染
+- 保存识别历史记录
+- **无需 API Key** 即可使用
 
 ### 📄 HTML 管理
 - 上传 HTML 静态页面
@@ -103,18 +110,22 @@ workspace/
 │   ├── llm_service.py        # LLM 服务
 │   ├── tts_service.py        # TTS 服务
 │   ├── note_generator.py     # 笔记生成
+│   ├── formula_ocr_service.py # 公式OCR服务
 │   ├── prompt_templates.py    # 提示词模板
 │   ├── handlers/            # 业务处理逻辑
 │   │   ├── notes_handler.py
 │   │   ├── translation_handler.py
 │   │   ├── media_handler.py
+│   │   ├── formula_handler.py
 │   │   └── html_handler.py
 │   └── ui/                 # UI 组件
 │       ├── home_page.py
 │       ├── notes_tab.py
 │       ├── translation_tab.py
 │       ├── media_tab.py
+│       ├── formula_tab.py
 │       └── html_tab.py
+├── formula_history/          # 公式识别历史记录
 ├── tests/                   # 测试文件
 ├── requirements.txt          # 项目依赖
 ├── Dockerfile              # Docker 镜像
@@ -150,10 +161,12 @@ make test
 
 ## 注意事项
 
-1. HTML 管理功能不需要 API Key
+1. 公式识别和 HTML 管理功能不需要 API Key
 2. 其他功能需要配置 DeepSeek API Key
 3. 翻译和媒材建议会共享上传的文档
 4. 建议使用 Python 3.8+
+5. 公式识别首次使用时会自动下载模型（约500MB），需要稳定网络连接
+6. 公式识别需要较大的内存（推荐4GB+），在低配置环境可能较慢
 
 ## 许可证
 

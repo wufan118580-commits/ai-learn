@@ -2,12 +2,15 @@
 
 help:
 	@echo "可用命令:"
-	@echo "  make install   安装依赖"
-	@echo "  make test      运行测试"
-	@echo "  make lint      代码检查"
-	@echo "  make format    代码格式化"
-	@echo "  make run       运行应用"
-	@echo "  make clean     清理缓存"
+	@echo "  make install        安装依赖"
+	@echo "  make test           运行所有测试"
+	@echo "  make test-formula   运行公式识别测试"
+	@echo "  make test-mathml    运行MathML转换测试"
+	@echo "  make test-integration 运行集成测试"
+	@echo "  make lint           代码检查"
+	@echo "  make format         代码格式化"
+	@echo "  make run            运行应用"
+	@echo "  make clean          清理缓存"
 
 install:
 	pip install --upgrade pip && \
@@ -26,8 +29,16 @@ lint:
 	# mypy src/ --ignore-missing-imports
 
 test:
-	# python -m pytest -vv --cov=app --cov-report=term-missing test_app.py
 	pytest tests/ -v --cov=src --cov-report=term-missing
+
+test-formula:
+	pytest tests/test_formula.py -v --tb=short
+
+test-mathml:
+	pytest tests/test_mathml_conversion.py -v --tb=short
+
+test-integration:
+	pytest tests/test_formula.py tests/test_mathml_conversion.py tests/test_document_processor.py -v
 
 clean:
 	rm -rf __pycache__
