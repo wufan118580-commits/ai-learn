@@ -144,6 +144,34 @@ ENV/
 env.bak/
 venv.bak/
 
+# Project specific
+html_storage/
+formula_history/
+
+# PyTorch and AI model files
+*.pth
+*.pt
+*.ckpt
+*.bin
+*.safetensors
+*.onnx
+*.pb
+model_weights/
+models/
+checkpoints/
+pretrained_models/
+huggingface/
+
+# Pix2Tex model cache
+.pix2tex/
+latex2ocr/
+model/
+
+# Core dumps and crash dumps
+core
+core.*
+*.core
+
 # Spyder project settings
 .spyderproject
 .spyproject

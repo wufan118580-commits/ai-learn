@@ -6,3 +6,17 @@ README.md
 __pycache__
 .pytest_cache
 env/
+
+# 持久化数据（不打包到镜像中）
+html_storage/
+
+# 配置文件（包含敏感信息）
+.env
+
+# 其他
+.git
+.gitignore
+*.log
+coverage/
+dist/
+.eggs/
