@@ -135,7 +135,7 @@ def render_formula_tab():
                         st.markdown(preview_latex, unsafe_allow_html=True)
 
                         # 显示当前使用的代码
-                        st.caption(f"当前预览的LaTeX代码:")
+                        st.caption("当前预览的LaTeX代码:")
                         st.code(st.session_state.editable_latex, language="latex")
                     except Exception as e:
                         st.error(f"❌ 预览失败: {str(e)}")
@@ -147,7 +147,7 @@ def render_formula_tab():
                 if st.session_state.editable_latex != result['latex']:
                     st.info("⚠️ 注意：您已修改了LaTeX代码，MathML将基于修改后的代码生成")
                     # 重新生成MathML
-                    updated_mathml = st.session_state.formula_handler._convert_latex_to_mathml(
+                    updated_mathml = st.session_state.formula_handler.convert_latex_to_mathml(
                         st.session_state.editable_latex
                     )
                     current_mathml = updated_mathml if updated_mathml else result.get('mathml', '')
