@@ -1,26 +1,15 @@
-"""
-公式识别处理器 - 处理公式识别业务逻辑
-"""
+"""公式识别处理器 - 处理公式识别业务逻辑"""
 import os
 import json
 from datetime import datetime
-import sys
 from pathlib import Path
 from latex2mathml.converter import convert as latex_to_mathml
-
-# 添加src目录到路径
-src_path = str(Path(__file__).parent.parent)
-if src_path not in sys.path:
-    sys.path.insert(0, src_path)
-
-from formula_ocr_service import FormulaOCRService
 
 
 class FormulaHandler:
     """公式识别处理器"""
 
     def __init__(self, storage_dir: str = "formula_history"):
-        self.ocr_service = FormulaOCRService()
         self.storage_dir = storage_dir
         self.metadata_file = os.path.join(storage_dir, "metadata.json")
 
@@ -53,7 +42,7 @@ class FormulaHandler:
         except Exception as e:
             print(f"保存元数据失败: {e}")
 
-    def _convert_latex_to_mathml(self, latex_code: str) -> str:
+    def convert_latex_to_mathml(self, latex_code: str) -> str:
         """
         将LaTeX代码转换为MathML格式
 
@@ -77,167 +66,3 @@ class FormulaHandler:
         except Exception as e:
             print(f"LaTeX转MathML失败: {e}")
             return None
-            return None
-
-    def process_formula_image(self, image_file, save_image: bool = True) -> dict:
-        """
-        处理上传的公式图片
-
-        Args:
-            image_file: Streamlit上传的文件对象
-            save_image: 是否保存图片到历史记录
-
-        Returns:
-            包含识别结果的字典
-        """
-        try:
-            # 读取图片数据
-            image_data = image_file.read()
-
-            # 识别公式
-            latex_code = self.ocr_service.recognize_formula(image_data)
-
-            if not latex_code:
-                return {
-                    "success": False,
-                    "error": "公式识别失败,请检查图片质量",
-                    "latex": ""
-                }
-
-            # 转换为MathML
-            mathml_code = self._convert_latex_to_mathml(latex_code)
-
-            result = {
-                "success": True,
-                "latex": latex_code,
-                "mathml": mathml_code,
-                "preview": f"$${latex_code}$$",
-                "filename": image_file.name,
-                "file_size": len(image_data),
-                "timestamp": datetime.now().isoformat()
-            }
-
-            # 保存到历史记录
-            if save_image:
-                self._save_to_history(image_file, image_data, result)
-
-            return result
-
-        except RuntimeError as e:
-            return {
-                "success": False,
-                "error": str(e),
-                "latex": ""
-            }
-        except Exception as e:
-            return {
-                "success": False,
-                "error": f"处理失败: {str(e)}",
-                "latex": ""
-            }
-
-    def _save_to_history(self, image_file, image_data: bytes, result: dict):
-        """保存识别结果到历史记录"""
-        try:
-            # 生成唯一ID
-            record_id = f"formula_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-
-            # 保存图片
-            image_path = os.path.join(self.storage_dir, f"{record_id}.png")
-            with open(image_path, 'wb') as f:
-                f.write(image_data)
-
-            # 更新元数据
-            metadata = self._load_metadata()
-            metadata.append({
-                "id": record_id,
-                "filename": image_file.name,
-                "latex": result["latex"],
-                "timestamp": result["timestamp"],
-                "image_path": image_path
-            })
-
-            # 按时间倒序排序(最新的在前)
-            metadata.sort(key=lambda x: x["timestamp"], reverse=True)
-
-            # 限制历史记录数量(最多保留50条)
-            if len(metadata) > 50:
-                # 删除旧记录的图片文件
-                old_records = metadata[50:]
-                for record in old_records:
-                    old_image_path = record.get("image_path")
-                    if old_image_path and os.path.exists(old_image_path):
-                        os.remove(old_image_path)
-                metadata = metadata[:50]
-
-            self._save_metadata(metadata)
-
-        except Exception as e:
-            print(f"保存历史记录失败: {e}")
-
-    def get_history(self, limit: int = 10) -> list:
-        """
-        获取历史记录
-
-        Args:
-            limit: 返回记录数量
-
-        Returns:
-            历史记录列表
-        """
-        try:
-            metadata = self._load_metadata()
-            return metadata[:limit]
-        except Exception as e:
-            print(f"获取历史记录失败: {e}")
-            return []
-
-    def delete_history(self, record_id: str) -> bool:
-        """
-        删除历史记录
-
-        Args:
-            record_id: 记录ID
-
-        Returns:
-            是否删除成功
-        """
-        try:
-            metadata = self._load_metadata()
-
-            # 找到并删除记录
-            for i, record in enumerate(metadata):
-                if record["id"] == record_id:
-                    # 删除图片文件
-                    image_path = record.get("image_path")
-                    if image_path and os.path.exists(image_path):
-                        os.remove(image_path)
-
-                    # 从元数据中删除
-                    metadata.pop(i)
-                    self._save_metadata(metadata)
-                    return True
-
-            return False
-        except Exception as e:
-            print(f"删除历史记录失败: {e}")
-            return False
-
-    def clear_all_history(self) -> bool:
-        """清空所有历史记录"""
-        try:
-            metadata = self._load_metadata()
-
-            # 删除所有图片文件
-            for record in metadata:
-                image_path = record.get("image_path")
-                if image_path and os.path.exists(image_path):
-                    os.remove(image_path)
-
-            # 清空元数据
-            self._save_metadata([])
-
-            return True
-        except Exception as e:
-            print(f"清空历史记录失败: {e}")
-            return False
