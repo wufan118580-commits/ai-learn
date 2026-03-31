@@ -9,8 +9,10 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 ENV APP_HOME /app
 WORKDIR $APP_HOME
 
-# 安装系统依赖
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# 安装系统依赖（使用国内镜像源）
+RUN echo "deb http://mirrors.cloud.tencent.com/debian/ trixie main" > /etc/apt/sources.list && \
+    echo "deb http://mirrors.cloud.tencent.com/debian-security/ trixie-security main" >> /etc/apt/sources.list && \
+    apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
     && rm -rf /var/lib/apt/lists/*
