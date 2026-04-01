@@ -3,7 +3,9 @@
 """
 import os
 import json
+from datetime import datetime
 from latex2mathml.converter import convert as latex_to_mathml
+from formula_ocr_service import FormulaOCRService
 
 
 class FormulaHandler:
@@ -12,6 +14,7 @@ class FormulaHandler:
     def __init__(self, storage_dir: str = "formula_history"):
         self.storage_dir = storage_dir
         self.metadata_file = os.path.join(storage_dir, "metadata.json")
+        self.ocr_service = FormulaOCRService()
 
         # 确保存储目录存在
         os.makedirs(storage_dir, exist_ok=True)
@@ -81,9 +84,15 @@ class FormulaHandler:
             # 读取图片数据
             image_data = image_file.read()
 
-            # 这里应该调用实际的公式识别服务
-            # 暂时返回模拟数据
-            latex_code = "x^2 + y^2 = z^2"  # 模拟识别结果
+            # 调用公式识别服务
+            latex_code = self.ocr_service.recognize_formula(image_data)
+
+            if not latex_code:
+                return {
+                    "success": False,
+                    "error": "公式识别失败，请检查图片质量",
+                    "latex": ""
+                }
 
             # 转换为MathML
             mathml_code = self.convert_latex_to_mathml(latex_code)
@@ -95,7 +104,7 @@ class FormulaHandler:
                 "preview": f"${latex_code}$",
                 "filename": image_file.name,
                 "file_size": len(image_data),
-                "timestamp": "2023-01-01T00:00:00"
+                "timestamp": datetime.now().isoformat()
             }
 
             # 保存到历史记录
