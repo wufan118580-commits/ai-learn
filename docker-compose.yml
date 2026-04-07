@@ -1,8 +1,43 @@
 version: '3.8'
 
 services:
-  app:
-    build: .
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: formula-api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PORT=8000
+      - HOST=0.0.0.0
+    volumes:
+      # 公式识别历史记录持久化存储
+      - formula_data:/app/formula_history
+    # 资源限制 - 需要更多内存用于 PyTorch
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+          cpus: '3.5'
+        reservations:
+          memory: 4G
+          cpus: '2'
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.ui
     container_name: document-learning-assistant
     ports:
       - "8501:8501"
@@ -12,21 +47,23 @@ services:
       - PYTHONUNBUFFERED=1
       - STREAMLIT_SERVER_PORT=8501
       - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+      - FORMULA_API_URL=http://api:8000
     volumes:
       # HTML 文件持久化存储
       - html_data:/app/html_storage
-      # 公式识别历史记录持久化存储
-      - formula_data:/app/formula_history
       # 可选：配置文件持久化
       - ./config:/app/config
-    # 资源限制 - 适配CPU4核8G环境
+    depends_on:
+      api:
+        condition: service_healthy
+    # 资源限制 - UI 轻量级
     deploy:
       resources:
         limits:
-          memory: 6G
-          cpus: '3.5'
-        reservations:
           memory: 2G
+          cpus: '2'
+        reservations:
+          memory: 1G
           cpus: '1'
     restart: unless-stopped
 

@@ -67,10 +67,25 @@ docker-compose down
 echo "✅ 旧容器已停止"
 echo ""
 
-# 构建新镜像
+# 构建新镜像（分离部署）
 echo "🔨 构建 Docker 镜像..."
-docker-compose build --no-cache
-echo "✅ 镜像构建完成"
+echo "📦 镜像构建计划："
+echo "  1. API 镜像 (包含 PyTorch + CUDA, ~8GB)"
+echo "  2. UI 镜像 (轻量级, ~300MB)"
+echo ""
+echo "⚠️  注意：首次构建需要下载 PyTorch 基础镜像"
+echo ""
+
+# 构建 API 镜像
+echo "🔨 构建 API 镜像..."
+docker build -f Dockerfile.api -t workspace-api:latest .
+echo "✅ API 镜像构建完成"
+
+# 构建 UI 镜像
+echo "🔨 构建 UI 镜像..."
+docker build -f Dockerfile.ui -t workspace-ui:latest .
+echo "✅ UI 镜像构建完成"
+
 echo ""
 
 # 启动容器

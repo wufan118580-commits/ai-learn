@@ -1,9 +1,0 @@
-#!/bin/bash
-# scf_bootstrap
-
-# 设置 Python 依赖加载路径，指向我们后续要安装的 third_party 目录
-export PYTHONPATH="./third_party:$PYTHONPATH"
-
-# 使用 CloudBase 运行时的 Python 解释器启动你的 Flask 应用
-# 注意：Flask 应用必须监听 9000 端口
-/var/lang/python310/bin/python3.10 app.py

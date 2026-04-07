@@ -12,6 +12,5 @@ openai
 python-dotenv
 edge-tts
 pix2tex
-torch>=2.0.0
 pillow>=9.0.0
 latex2mathml
