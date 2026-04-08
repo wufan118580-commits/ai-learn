@@ -10,7 +10,14 @@ from dotenv import load_dotenv
 warnings.filterwarnings('ignore', category=FutureWarning)
 warnings.filterwarnings('ignore', category=UserWarning, module='albumentations')
 warnings.filterwarnings('ignore', category=UserWarning, module='pydantic')
+
+# 禁用OpenCV的GUI功能（在无GUI环境中）
+os.environ['QT_QPA_PLATFORM'] = 'offscreen'
+os.environ['OPENCV_IO_ENABLE_OPENEXR'] = '1'
 os.environ['XDG_RUNTIME_DIR'] = '/tmp/runtime-root'
+
+# 确保工作目录存在
+os.makedirs('/tmp/runtime-root', exist_ok=True)
 
 # 加载环境变量
 load_dotenv()

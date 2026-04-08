@@ -1,81 +1,91 @@
-name: CI and Sync
+name: CI/CD Pipeline
 
-on: 
+on:
   push:
-    branches:
-      [ main, develop ]  # 监听 main 和 develop 分支的推送
-    pull_request:
-      branches:
-        [ main ]  # 监听指向这两个分支的 PR
+    branches: [ develop, main ]
+  pull_request:
+    branches: [ develop, main ]
 
 jobs:
   test:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        python-version: ["3.11"]
-
+    
     steps:
-    - name: Check out code
-      uses: actions/checkout@v3
-
-    - name: Set up Python ${{ matrix.python-version }}
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}  # 指定Python版本
-
-
-    - name: Cache pip dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        # key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-        key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
-        # restore-keys: |
-        #   ${{ runner.os }}-pip-
-       
-      
+        python-version: '3.11'
+    
     - name: Install dependencies
       run: |
-        make install-dev
-
-    - name: Lint code
-      run: |
-        make lint
-
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov
+    
     - name: Run tests
       run: |
-        make test
-
-    # - name: Format code
-    #   run: |
-    #     # 运行代码格式化工具，例如 black
-    #     make format
-
-    # - name: Upload coverage report
-    #   uses: codecov/codecov-action@v3
-    #   with:
-    #     name: coverage-report
-    #     path: .coverage
-
-    # 新增：只有 main 分支的推送才同步到 CNB
-  sync-to-cnb:
-    needs: test
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        pytest tests/ --cov=src --cov-report=term-missing
+    
+    - name: Check code quality
+      run: |
+        pip install flake8
+        flake8 src/ --count --select=E9,F63,F7,F82 --show-source --statistics
+    
+  build-api:
     runs-on: ubuntu-latest
+    needs: test
+    
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - name: Sync to CNB Repository
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:${{ github.workspace }} \
-            -w ${{ github.workspace }} \
-            -e PLUGIN_TARGET_URL="https://cnb.cool/Studuent-Wu/ai-learn-demo.git" \
-            -e PLUGIN_AUTH_TYPE="https" \
-            -e PLUGIN_USERNAME="cnb" \
-            -e PLUGIN_PASSWORD=${{ secrets.CNB_TOKEN }} \
-            -e PLUGIN_FORCE="true" \
-            tencentcom/git-sync
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build API image
+      run: |
+        docker build -f Dockerfile.api -t workspace-api:latest .
+    
+    - name: Test API image
+      run: |
+        docker run --rm workspace-api:latest python -c "import torch; print(f'PyTorch: {torch.__version__}'); print(f'CUDA: {torch.cuda.is_available()}')"
+  
+  build-ui:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build UI image
+      run: |
+        docker build -f Dockerfile.ui -t workspace-ui:latest .
+    
+    - name: Test UI image
+      run: |
+        docker run --rm workspace-ui:latest python -c "import streamlit; print(f'Streamlit: {streamlit.__version__}')"
+  
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build-api, build-ui]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Docker Compose
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y docker-compose
+    
+    - name: Deploy with compose
+      run: |
+        docker-compose up -d
+        sleep 10
+        docker-compose ps
+        docker-compose logs --tail=20

@@ -1,8 +1,7 @@
-# 使用官方 Python 轻量级镜像
-# https://hub.docker.com/_/python
+# UI 服务 Dockerfile（轻量级）
 FROM python:3.11-slim
 
-# 设置时区，容器默认时区为UTC
+# 设置时区
 ENV TZ=Asia/Shanghai
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
@@ -22,15 +21,16 @@ COPY . .
 ENV PYTHONUNBUFFERED=1
 ENV STREAMLIT_SERVER_PORT=8501
 ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
-# 禁用OpenCV的GUI功能（在无GUI环境中）
-ENV QT_QPA_PLATFORM=offscreen
-ENV OPENCV_IO_ENABLE_OPENEXR=1
+# API 服务地址（通过 docker-compose 网络访问）
+ENV FORMULA_API_URL=http://api:8000
 
-# 安装依赖
-# 选用国内镜像源以提高下载速度
+# 安装依赖（移除 PyTorch 相关依赖）
 RUN pip config set global.index-url http://mirrors.cloud.tencent.com/pypi/simple && \
     pip config set global.trusted-host mirrors.cloud.tencent.com && \
     pip install --no-cache-dir --upgrade pip && \
+    # 移除 PyTorch 和 pix2tex（UI 不需要）
+    sed -i '/torch>=2.0.0/d' requirements.txt && \
+    sed -i '/pix2tex/d' requirements.txt && \
     pip install --no-cache-dir -r requirements.txt
 
 EXPOSE 8501

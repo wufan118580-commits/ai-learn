@@ -42,10 +42,24 @@ def render_formula_tab():
 
     st.markdown("---")
 
-    # 初始化处理器
-    if 'formula_handler' not in st.session_state:
-        from handlers.formula_handler import FormulaHandler
-        st.session_state.formula_handler = FormulaHandler()
+    # 初始化 API 客户端
+    if 'formula_api_client' not in st.session_state:
+        from api_client import FormulaAPIClient
+        st.session_state.formula_api_client = FormulaAPIClient()
+    
+    # 检查 API 服务状态
+    api_status = st.session_state.formula_api_client.health_check()
+    if api_status.get("status") != "healthy":
+        st.warning(f"⚠️ 公式识别 API 服务不可用: {api_status.get('error', '未知错误')}")
+        st.info("请确保 API 服务已启动，或切换到本地模式")
+        
+        # 备用：本地处理器（如果 API 不可用）
+        if 'formula_handler' not in st.session_state:
+            from handlers.formula_handler import FormulaHandler
+            st.session_state.formula_handler = FormulaHandler()
+        use_api = False
+    else:
+        use_api = True
 
     # 初始化状态
     if 'formula_result' not in st.session_state:
@@ -74,20 +88,36 @@ def render_formula_tab():
         with col2:
             st.subheader("🔍 识别结果")
             if st.button("🚀 识别公式", type="primary", key="recognize_formula_button"):
-                with st.spinner("正在识别公式... (首次使用需要下载模型)"):
+                with st.spinner("正在识别公式..."):
                     start_time = time.time()
 
-                    # 处理识别
-                    result = st.session_state.formula_handler.process_formula_image(uploaded_file)
+                    # 读取图片数据
+                    image_data = uploaded_file.read()
+                    
+                    # 根据 API 状态选择处理方式
+                    if use_api:
+                        # 调用 API 服务
+                        result = st.session_state.formula_api_client.recognize_formula(
+                            image_data, 
+                            uploaded_file.name
+                        )
+                    else:
+                        # 本地处理（备用）
+                        result = st.session_state.formula_handler.process_formula_image(uploaded_file)
 
                     elapsed_time = time.time() - start_time
 
                     st.session_state.formula_result = result
 
-                    if result['success']:
+                    if result.get('success'):
                         st.success(f"✅ 识别成功! (耗时: {elapsed_time:.1f}秒)")
+                        # 同步更新可编辑的LaTeX代码
+                        st.session_state.editable_latex = result['data']['latex']
+                        # 清除文本框的旧值，强制使用新值
+                        if 'editable_latex_text' in st.session_state:
+                            del st.session_state.editable_latex_text
                     else:
-                        st.error(f"❌ {result['error']}")
+                        st.error(f"❌ {result.get('error', '识别失败')}")
 
         # 显示识别结果
         if st.session_state.formula_result:
@@ -99,7 +129,9 @@ def render_formula_tab():
 
                 # 初始化可编辑的LaTeX代码
                 if 'editable_latex' not in st.session_state:
-                    st.session_state.editable_latex = result['latex']
+                    # 兼容两种结果格式：API格式和本地格式
+                    latex = result['data']['latex'] if 'data' in result else result['latex']
+                    st.session_state.editable_latex = latex
 
                 # 分两栏显示：左侧LaTeX代码，右侧可视化预览
                 col_left, col_right = st.columns([1, 1])
@@ -121,7 +153,9 @@ def render_formula_tab():
 
                     # 重置按钮
                     if st.button("🔄 重置为原始识别结果", key="reset_latex"):
-                        st.session_state.editable_latex = result['latex']
+                        # 兼容两种结果格式：API格式和本地格式
+                        latex = result['data']['latex'] if 'data' in result else result['latex']
+                        st.session_state.editable_latex = latex
                         st.rerun()
 
                     st.info("💡 提示：可以直接修改上方的LaTeX代码，右侧预览会自动更新")
@@ -144,7 +178,10 @@ def render_formula_tab():
                 st.markdown("---")
 
                 # 显示MathML代码（基于编辑后的LaTeX）
-                if st.session_state.editable_latex != result['latex']:
+                # 获取原始 LaTeX（兼容两种格式）
+                original_latex = result['data']['latex'] if 'data' in result else result['latex']
+                
+                if st.session_state.editable_latex != original_latex:
                     st.info("⚠️ 注意：您已修改了LaTeX代码，MathML将基于修改后的代码生成")
                     # 重新生成MathML
                     updated_mathml = st.session_state.formula_handler.convert_latex_to_mathml(
@@ -152,7 +189,9 @@ def render_formula_tab():
                     )
                     current_mathml = updated_mathml if updated_mathml else result.get('mathml', '')
                 else:
-                    current_mathml = result.get('mathml', '')
+                    # 获取原始 MathML（兼容两种格式）
+                    original_mathml = result['data']['mathml'] if 'data' in result else result.get('mathml', '')
+                    current_mathml = original_mathml
 
                 # MathML代码显示（折叠）
                 with st.expander("🧮 查看MathML代码 (用于Word)", expanded=False):

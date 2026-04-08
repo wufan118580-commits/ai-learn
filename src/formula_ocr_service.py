@@ -1,6 +1,16 @@
 """
 公式OCR服务 - 用于识别图片中的数学公式并转换为LaTeX格式
 """
+import os
+import warnings
+
+# 在导入OpenCV相关模块之前设置环境变量，禁用GUI功能
+os.environ['QT_QPA_PLATFORM'] = 'offscreen'
+os.environ['OPENCV_IO_ENABLE_OPENEXR'] = '1'
+
+# 抑制PyCryptodome的弃用警告
+warnings.filterwarnings('ignore', category=DeprecationWarning, module='cryptography')
+
 from PIL import Image
 import io
 
