@@ -133,10 +133,13 @@ def main():
     
     # 检查是否有测试图片
     test_images = [
-        "test_formula.png",
-        "formula.png",
-        "example.png",
-        "math.png"
+        # "test_formula.png",
+        # "formula.png",
+        # "example.png",
+        # "math.png"
+        "formula_history/11111.png",
+        "formula_history/22222.png",
+
     ]
     
     for image_name in test_images:
