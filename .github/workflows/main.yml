@@ -81,14 +81,7 @@ jobs:
 
     - name: Verify API image (import check)
       run: |
-        docker run --rm workspace-api:latest \
-          python -c "
-            import torch;
-            print(f'✅ PyTorch: {torch.__version__}');
-            print(f'   CUDA available: {torch.cuda.is_available()}')
-            from api.services.formula_ocr_service import FormulaOCRService;
-            print('✅ FormulaOCRService import OK');
-          "
+        docker run --rm workspace-api:latest python -c "import torch; print(f'PyTorch: {torch.__version__}, CUDA: {torch.cuda.is_available()}'); from api.services.formula_ocr_service import FormulaOCRService; print('FormulaOCRService import OK')"
 
   # ================================================================
   # Job 3: 构建并验证 UI 镜像
