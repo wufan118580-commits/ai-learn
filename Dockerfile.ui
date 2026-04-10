@@ -25,6 +25,10 @@ ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
 ENV FORMULA_API_URL=http://api:8000
 
 # 安装 Python 依赖（requirements.txt 已不含 torch/pix2tex）
+# 配置国内 pip 镜像源（腾讯云服务器访问 PyPI 需要加速）
+RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple && \
+    pip config set global.trusted-host pypi.tuna.tsinghua.edu.cn
+
 # 先升级 pip 和 setuptools 到最新版本
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
