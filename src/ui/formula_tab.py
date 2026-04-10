@@ -24,7 +24,7 @@ def render_formula_tab():
         - **MathML代码**: 可直接复制到Word中使用,支持粘贴后自动转换为可编辑公式
 
         **注意事项:**
-        - 首次使用时需要下载识别模型(约500MB),请耐心等待
+        - 请确保公式识别 API 服务已启动
         - 图片质量越高,识别准确度越好
         - 建议使用清晰的手写公式或印刷体公式
         - 复杂公式可能需要较长的识别时间
@@ -46,20 +46,19 @@ def render_formula_tab():
     if 'formula_api_client' not in st.session_state:
         from api_client import FormulaAPIClient
         st.session_state.formula_api_client = FormulaAPIClient()
-    
+
+    # 初始化公式处理器（用于 MathML 转换和历史管理，不依赖 OCR）
+    if 'formula_handler' not in st.session_state:
+        from handlers.formula_handler import FormulaHandler
+        st.session_state.formula_handler = FormulaHandler()
+
     # 检查 API 服务状态
     api_status = st.session_state.formula_api_client.health_check()
     if api_status.get("status") != "healthy":
-        st.warning(f"⚠️ 公式识别 API 服务不可用: {api_status.get('error', '未知错误')}")
-        st.info("请确保 API 服务已启动，或切换到本地模式")
-        
-        # 备用：本地处理器（如果 API 不可用）
-        if 'formula_handler' not in st.session_state:
-            from handlers.formula_handler import FormulaHandler
-            st.session_state.formula_handler = FormulaHandler()
-        use_api = False
+        st.error(f"❌ 公式识别 API 服务不可用: {api_status.get('error', '未知错误')}")
+        st.info("请确保 API 服务已启动（docker-compose up）")
     else:
-        use_api = True
+        st.success("✅ 公式识别 API 服务已连接")
 
     # 初始化状态
     if 'formula_result' not in st.session_state:
@@ -93,17 +92,12 @@ def render_formula_tab():
 
                     # 读取图片数据
                     image_data = uploaded_file.read()
-                    
-                    # 根据 API 状态选择处理方式
-                    if use_api:
-                        # 调用 API 服务
-                        result = st.session_state.formula_api_client.recognize_formula(
-                            image_data, 
-                            uploaded_file.name
-                        )
-                    else:
-                        # 本地处理（备用）
-                        result = st.session_state.formula_handler.process_formula_image(uploaded_file)
+
+                    # 调用 API 服务进行公式识别
+                    result = st.session_state.formula_api_client.recognize_formula(
+                        image_data,
+                        uploaded_file.name
+                    )
 
                     elapsed_time = time.time() - start_time
 
@@ -129,9 +123,7 @@ def render_formula_tab():
 
                 # 初始化可编辑的LaTeX代码
                 if 'editable_latex' not in st.session_state:
-                    # 兼容两种结果格式：API格式和本地格式
-                    latex = result['data']['latex'] if 'data' in result else result['latex']
-                    st.session_state.editable_latex = latex
+                    st.session_state.editable_latex = result['data']['latex']
 
                 # 分两栏显示：左侧LaTeX代码，右侧可视化预览
                 col_left, col_right = st.columns([1, 1])
@@ -153,9 +145,7 @@ def render_formula_tab():
 
                     # 重置按钮
                     if st.button("🔄 重置为原始识别结果", key="reset_latex"):
-                        # 兼容两种结果格式：API格式和本地格式
-                        latex = result['data']['latex'] if 'data' in result else result['latex']
-                        st.session_state.editable_latex = latex
+                        st.session_state.editable_latex = result['data']['latex']
                         st.rerun()
 
                     st.info("💡 提示：可以直接修改上方的LaTeX代码，右侧预览会自动更新")
@@ -178,8 +168,7 @@ def render_formula_tab():
                 st.markdown("---")
 
                 # 显示MathML代码（基于编辑后的LaTeX）
-                # 获取原始 LaTeX（兼容两种格式）
-                original_latex = result['data']['latex'] if 'data' in result else result['latex']
+                original_latex = result['data']['latex']
                 
                 if st.session_state.editable_latex != original_latex:
                     st.info("⚠️ 注意：您已修改了LaTeX代码，MathML将基于修改后的代码生成")
@@ -189,9 +178,7 @@ def render_formula_tab():
                     )
                     current_mathml = updated_mathml if updated_mathml else result.get('mathml', '')
                 else:
-                    # 获取原始 MathML（兼容两种格式）
-                    original_mathml = result['data']['mathml'] if 'data' in result else result.get('mathml', '')
-                    current_mathml = original_mathml
+                    current_mathml = result['data']['mathml']
 
                 # MathML代码显示（折叠）
                 with st.expander("🧮 查看MathML代码 (用于Word)", expanded=False):

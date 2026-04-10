@@ -27,13 +27,29 @@ if [ ! -f .env ]; then
     if [ -f .env.example ]; then
         cp .env.example .env
         echo "✅ 已创建 .env 文件"
-        echo "⚠️  请编辑 .env 文件，配置 DEEPSEEK_API_KEY"
         echo ""
-        read -p "是否现在配置 API Key？(y/n): " configure_api
-        if [ "$configure_api" = "y" ]; then
-            read -p "请输入 DeepSeek API Key: " api_key
-            sed -i "s/your_deepseek_api_key_here/$api_key/" .env
-            echo "✅ API Key 已配置"
+        
+        # 检查是否需要配置 API Key
+        if grep -q "your_deepseek_api_key_here" .env; then
+            echo "🔑 需要配置 DeepSeek API Key"
+            echo ""
+            read -p "是否现在配置 API Key？(y/n): " configure_api
+            if [ "$configure_api" = "y" ] || [ "$configure_api" = "Y" ]; then
+                echo ""
+                echo "📝 配置说明："
+                echo "   - 获取 DeepSeek API Key: https://platform.deepseek.com/api_keys"
+                echo "   - 格式: sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                echo ""
+                read -p "请输入 DeepSeek API Key: " api_key
+                if [ -n "$api_key" ]; then
+                    sed -i "s/your_deepseek_api_key_here/$api_key/" .env
+                    echo "✅ API Key 已配置"
+                else
+                    echo "⚠️  未输入 API Key，请稍后手动配置 .env 文件"
+                fi
+            else
+                echo "⚠️  请稍后手动编辑 .env 文件配置 API Key"
+            fi
         fi
     else
         echo "❌ 错误：未找到 .env.example 文件"
@@ -54,10 +70,20 @@ if [ ! -f .env ]; then
     exit 1
 fi
 
+# 检查关键配置
 if grep -q "your_deepseek_api_key_here" .env; then
     echo "⚠️  警告：.env 中的 API Key 还是默认值，请手动配置"
     echo "   编辑 .env 文件，设置 DEEPSEEK_API_KEY"
 fi
+
+# 检查是否包含必要的环境变量
+required_vars=("DEEPSEEK_API_KEY" "STREAMLIT_SERVER_PORT" "STREAMLIT_SERVER_ADDRESS")
+for var in "${required_vars[@]}"; do
+    if ! grep -q "^${var}=" .env; then
+        echo "⚠️  警告：.env 中缺少 $var 配置"
+    fi
+done
+
 echo "✅ 配置验证完成"
 echo ""
 
@@ -76,21 +102,9 @@ echo ""
 echo "⚠️  注意：首次构建需要下载 PyTorch 基础镜像"
 echo ""
 
-# 构建 API 镜像
-echo "🔨 构建 API 镜像..."
-docker build -f Dockerfile.api -t workspace-api:latest .
-echo "✅ API 镜像构建完成"
-
-# 构建 UI 镜像
-echo "🔨 构建 UI 镜像..."
-docker build -f Dockerfile.ui -t workspace-ui:latest .
-echo "✅ UI 镜像构建完成"
-
-echo ""
-
-# 启动容器
-echo "🚀 启动容器..."
-docker-compose up -d
+# 直接使用 docker-compose 构建和启动
+echo "🔨 构建并启动容器..."
+docker-compose up --build -d
 echo "✅ 容器已启动"
 echo ""
 

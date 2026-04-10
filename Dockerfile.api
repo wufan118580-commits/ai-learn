@@ -1,11 +1,11 @@
 # API 服务 Dockerfile（完整 PyTorch）
-FROM pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+FROM pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime
 
 # 设置时区
 ENV TZ=Asia/Shanghai
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-ENV APP_HOME /app
+ENV APP_HOME=/app
 WORKDIR $APP_HOME
 
 # 安装系统依赖
@@ -23,16 +23,12 @@ ENV PYTHONUNBUFFERED=1
 ENV QT_QPA_PLATFORM=offscreen
 ENV OPENCV_IO_ENABLE_OPENEXR=1
 
-# 创建 requirements.txt 的副本，移除不需要的依赖
-RUN cp requirements.txt requirements-api.txt && \
-    sed -i '/streamlit/d' requirements-api.txt && \
-    sed -i '/streamlit-mermaid/d' requirements-api.txt
+# 直接使用 api/requirements-api.txt
+# 先升级 pip 和 setuptools
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
-# 安装项目依赖（使用国内镜像源）
-RUN pip config set global.index-url http://mirrors.cloud.tencent.com/pypi/simple && \
-    pip config set global.trusted-host mirrors.cloud.tencent.com && \
-    pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements-api.txt
+# 安装项目依赖
+RUN pip install --no-cache-dir -r api/requirements-api.txt
 
 # 复制 API 服务文件
 COPY api/main.py /app/api/

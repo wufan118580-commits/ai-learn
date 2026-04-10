@@ -11,6 +11,5 @@ requests
 openai
 python-dotenv
 edge-tts
-pix2tex
 pillow>=9.0.0
 latex2mathml

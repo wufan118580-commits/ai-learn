@@ -1,20 +1,21 @@
 """
-公式识别处理器 - 处理公式识别业务逻辑
+公式识别处理器 - 公式相关的业务逻辑处理（LaTeX转MathML、历史记录管理）
+注意：公式识别（OCR）已移至 api/services/formula_ocr_service.py，由API服务独立提供
+UI 端只通过 HTTP API 调用公式识别功能，不依赖 PyTorch/Pix2Tex。
 """
 import os
 import json
 from datetime import datetime
+
 from latex2mathml.converter import convert as latex_to_mathml
-from formula_ocr_service import FormulaOCRService
 
 
 class FormulaHandler:
-    """公式识别处理器"""
+    """公式处理器：LaTeX/MathML转换 + 历史记录管理"""
 
     def __init__(self, storage_dir: str = "formula_history"):
         self.storage_dir = storage_dir
         self.metadata_file = os.path.join(storage_dir, "metadata.json")
-        self.ocr_service = FormulaOCRService()
 
         # 确保存储目录存在
         os.makedirs(storage_dir, exist_ok=True)
@@ -69,58 +70,8 @@ class FormulaHandler:
             print(f"LaTeX转MathML失败: {e}")
             return None
 
-    def process_formula_image(self, image_file, save_image: bool = True) -> dict:
-        """
-        处理上传的公式图片
-
-        Args:
-            image_file: Streamlit上传的文件对象
-            save_image: 是否保存图片到历史记录
-
-        Returns:
-            包含识别结果的字典
-        """
-        try:
-            # 读取图片数据
-            image_data = image_file.read()
-
-            # 调用公式识别服务
-            latex_code = self.ocr_service.recognize_formula(image_data)
-
-            if not latex_code:
-                return {
-                    "success": False,
-                    "error": "公式识别失败，请检查图片质量",
-                    "latex": ""
-                }
-
-            # 转换为MathML
-            mathml_code = self.convert_latex_to_mathml(latex_code)
-
-            result = {
-                "success": True,
-                "latex": latex_code,
-                "mathml": mathml_code,
-                "preview": f"${latex_code}$",
-                "filename": image_file.name,
-                "file_size": len(image_data),
-                "timestamp": datetime.now().isoformat()
-            }
-
-            # 保存到历史记录
-            if save_image:
-                self._save_to_history(image_file, image_data, result)
-
-            return result
-        except Exception as e:
-            return {
-                "success": False,
-                "error": f"处理失败: {str(e)}",
-                "latex": ""
-            }
-
-    def _save_to_history(self, image_file, image_data: bytes, result: dict):
-        """保存识别结果到历史记录"""
+    def save_to_history(self, image_data: bytes, filename: str, latex_code: str, timestamp: str):
+        """保存识别结果到历史记录（供UI端调用API后使用）"""
         try:
             import time
             record_id = f"formula_{int(time.time())}"
@@ -134,9 +85,9 @@ class FormulaHandler:
             metadata = self._load_metadata()
             metadata.append({
                 "id": record_id,
-                "filename": image_file.name,
-                "latex": result.get("latex", ""),
-                "timestamp": result.get("timestamp", ""),
+                "filename": filename,
+                "latex": latex_code,
+                "timestamp": timestamp,
                 "image_path": image_path
             })
 
@@ -145,7 +96,6 @@ class FormulaHandler:
 
             # 限制历史记录数量(最多保留50条)
             if len(metadata) > 50:
-                # 删除旧记录的图片文件
                 old_records = metadata[50:]
                 for record in old_records:
                     old_image_path = record.get("image_path")

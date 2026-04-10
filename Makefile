@@ -7,8 +7,24 @@ help: ## 显示帮助信息
 	@echo ""
 	@echo "用法: make [target]"
 	@echo ""
-	@echo "Targets:"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2}'
+	@echo "本地开发 (无需 Docker):"
+	@echo "  make deps        安装依赖"
+	@echo "  make dev         完整开发环境设置"
+	@echo "  make run-ui      启动 Streamlit UI"
+	@echo "  make test        运行测试"
+	@echo ""
+	@echo "Docker 相关:"
+	@echo "  make build       构建所有镜像 (api + ui)"
+	@echo "  make deploy      docker-compose 一键部署"
+	@echo "  make status      查看容器状态"
+	@echo "  make logs        查看容器日志"
+	@echo "  make stop        停止所有服务"
+	@echo ""
+	@echo "CI/CD:"
+	@echo "  make lint        代码风格检查 (同 Actions)"
+	@echo "  make format      格式化代码"
+	@echo "  make clean       清理临时文件"
+	@echo ""
 
 test: ## 运行所有测试
 	pytest tests/ -v
@@ -98,7 +114,16 @@ docker-clean: ## 清理Docker资源
 
 setup: deps clean ## 完整项目设置
 	@echo "项目设置完成"
-	@echo "运行以下命令启动服务："
-	@echo "  make run-ui  # 启动UI服务"
-	@echo "  make run-api # 启动API服务"
-	@echo "  make deploy  # 使用Docker部署"
+	@echo ""
+	@echo "日常开发流程:"
+	@echo "  make run-ui      # 启动 UI 服务 (开发模式)"
+	@echo "  make test        # 跑测试 (push develop 前先跑)"
+	@echo ""
+	@echo "发版流程:"
+	@echo "  1. git push origin develop          → Actions: 测试+构建验证"
+	@echo "  2. gh pr create --base main         → Actions: PR 门禁"
+	@echo "  3. 合并 PR                          → Actions: 自动部署"
+
+ci: lint test build ## 本地模拟完整 CI 流程（测试 + 检查 + 构建镜像）
+	@echo ""
+	@echo "✅ CI 流程全部通过，可以安全 push"
