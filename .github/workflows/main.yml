@@ -166,20 +166,22 @@ jobs:
           echo "📍 开始部署到腾讯云服务器..."
 
           # 配置 Git 代理（国内服务器访问 GitHub 需要加速）
+          # 代理格式: https://gh-proxy.com/https://github.com/OWNER/REPO.git
           export GIT_PROXY_URL="https://gh-proxy.com"
-          echo "🔧 配置 Git 加速: $GIT_PROXY_URL"
+          export GITHUB_REPO_URL="https://github.com/${{ github.repository }}.git"
+          echo "🔧 配置 Git 加速: ${GIT_PROXY_URL}/${GITHUB_REPO_URL}"
 
           # 进入项目目录（首次会自动 clone）
           if [ -d "${{ secrets.PROJECT_PATH }}" ]; then
             cd ${{ secrets.PROJECT_PATH }}
             echo "📂 项目目录存在，拉取最新代码..."
             # 设置远程 URL 为加速地址
-            git remote set-url origin ${GIT_PROXY_URL}/${{ github.repository }}.git
+            git remote set-url origin ${GIT_PROXY_URL}/${GITHUB_REPO_URL}
             git fetch origin main
             git reset --hard origin/main
           else
             echo "📂 首次部署，克隆项目..."
-            git clone ${GIT_PROXY_URL}/${{ github.repository }}.git ${{ secrets.PROJECT_PATH }}
+            git clone ${GIT_PROXY_URL}/${GITHUB_REPO_URL} ${{ secrets.PROJECT_PATH }}
             cd ${{ secrets.PROJECT_PATH }}
             git checkout main
           fi
