@@ -1,12 +1,12 @@
 # 公式识别 API 依赖
-fastapi>=0.100.0
-uvicorn[standard]>=0.23.0
-python-multipart>=0.0.6
-pydantic>=2.0.0
-python-dotenv>=1.0.0
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+pydantic==2.5.0
+python-dotenv==1.0.0
 
 # 现有项目依赖
-pillow>=9.0.0
-latex2mathml>=0.13.0
-pix2tex>=0.1.0
-torch>=2.0.0
+pillow==10.1.0
+latex2mathml==3.77.0
+pix2tex
+# 注意：torch 已由基础镜像 pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime 提供，无需重复安装

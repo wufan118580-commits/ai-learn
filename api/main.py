@@ -17,7 +17,7 @@ import io
 import time
 
 # 导入现有服务
-from src.formula_ocr_service import FormulaOCRService
+from api.services.formula_ocr_service import FormulaOCRService
 from src.handlers.formula_handler import FormulaHandler
 
 # 创建 FastAPI 应用
@@ -79,12 +79,9 @@ async def root():
 @app.get("/health")
 async def health_check():
     """健康检查端点"""
-    status = "healthy"
-    if ocr_service is None:
-        status = "unhealthy"
-    
+    # 服务进程存活即返回 healthy，模型加载状态通过 model_loaded 字段体现
     return {
-        "status": status,
+        "status": "healthy",
         "service": "formula-ocr-api",
         "model_loaded": ocr_service is not None,
         "timestamp": time.time()
@@ -135,7 +132,7 @@ async def recognize_formula(image: UploadFile = File(...)):
                 status_code=422,
                 content={
                     "success": False,
-                    "error": "公式识别失败，请确保图片包含清晰的数学公式"
+                    "error": "公式识别返回空结果，请确保图片包含清晰的数学公式"
                 }
             )
         
