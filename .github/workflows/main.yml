@@ -108,19 +108,11 @@ jobs:
 
     - name: Verify UI image (import check)
       run: |
-        docker run --rm workspace-ui:latest \
-          python -c "
-            import streamlit;
-            print(f'✅ Streamlit: {streamlit.__version__}')
-            from src.handlers.formula_handler import FormulaHandler;
-            print('✅ FormulaHandler import OK (无 PyTorch 依赖)')
-          "
+        docker run --rm workspace-ui:latest python -c "import streamlit; print(f'Streamlit: {streamlit.__version__}'); from src.handlers.formula_handler import FormulaHandler; print('FormulaHandler import OK')"
 
     - name: Confirm no torch in UI image
       run: |
-        docker run --rm workspace-ui:latest bash -c "
-          ! python -c 'import torch' 2>/dev/null && echo '✅ UI 镜像不含 torch (符合预期)' || echo '❌ UI 镜像不应包含 torch'
-        "
+        docker run --rm workspace-ui:latest bash -c "! python -c 'import torch' 2>/dev/null && echo 'UI镜像不含torch(符合预期)' || echo 'UI镜像不应包含torch'"
 
   # ================================================================
   # Job 4: 部署（仅 push to main）→ 通过 SSH 部署到腾讯云服务器
