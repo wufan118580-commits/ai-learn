@@ -9,6 +9,9 @@ ENV APP_HOME=/app
 WORKDIR $APP_HOME
 
 # 安装系统依赖
+# 配置国内 apt 镜像源（腾讯云服务器需要）
+RUN sed -i 's|deb.debian.org|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list.d/debian.sources || \
+    sed -i 's|deb.debian.org|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list 2>/dev/null; true
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
