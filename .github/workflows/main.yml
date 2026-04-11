@@ -215,7 +215,7 @@ jobs:
               break
             fi
 
-            if [ "$i" = "$MAX_API_RETRIES ]; then
+            if [ "$i" = "$MAX_API_RETRIES" ]; then
               echo "❌ API 服务超时未就绪！查看日志："
               docker compose logs api --tail=50
               echo ""
