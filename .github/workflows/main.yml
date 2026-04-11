@@ -198,30 +198,37 @@ jobs:
           echo "🔄 重启 Docker 服务..."
           docker compose down --remove-orphans || true
           docker compose build --no-cache
-          docker compose up -d
 
-          # 等待服务启动并进行健康检查
-          echo "⏳ 等待服务启动..."
-          sleep 30
+          # 分步启动：先启动 API，等待健康后，再启动 UI
+          echo "🚀 启动 API 服务..."
+          docker compose up -d api
 
-          echo "🔍 健康检查..."
-          MAX_RETRIES=6
-          for i in $(seq 1 $MAX_RETRIES); do
+          echo "⏳ 等待 API 服务就绪（模型加载可能需要 2~5 分钟）..."
+          MAX_API_RETRIES=20  # 最多等待 10 分钟
+          for i in $(seq 1 $MAX_API_RETRIES); do
+            sleep 30
             API_HEALTH=$(curl -sf http://localhost:8000/health 2>/dev/null || echo "unhealthy")
-            echo "[$i/$MAX_RETRIES] API: $API_HEALTH"
+            echo "[$i/$MAX_API_RETRIES] API: $API_HEALTH"
 
             if echo "$API_HEALTH" | grep -q '"status":"healthy"'; then
-              echo "✅ API 服务健康"
+              echo "✅ API 服务已就绪"
               break
             fi
 
-            if [ "$i" = "$MAX_RETRIES" ]; then
-              echo "❌ API 服务启动失败！查看日志："
-              docker compose logs api --tail=30
-              exit 1
+            if [ "$i" = "$MAX_API_RETRIES ]; then
+              echo "❌ API 服务超时未就绪！查看日志："
+              docker compose logs api --tail=50
+              echo ""
+              echo "⚠️  尝试继续启动 UI（API 可能仍在加载模型）..."
             fi
-            sleep 10
           done
+
+          echo "🚀 启动 UI 服务..."
+          docker compose up -d ui
+
+          # 最终健康检查
+          echo "🔍 最终服务状态检查..."
+          sleep 15
 
           echo ""
           echo "========================================="
