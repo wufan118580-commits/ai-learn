@@ -10,7 +10,7 @@ import os
 class FormulaAPIClient:
     """公式识别 API 客户端"""
     
-    def __init__(self, base_url="http://localhost:8000"):
+    def __init__(self, base_url="https://42.194.146.142:8000"):
         self.base_url = base_url.rstrip("/")
     
     def health_check(self):
