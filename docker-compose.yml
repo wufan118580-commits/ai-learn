@@ -55,7 +55,7 @@ volumes:
   formula_data:
     driver: local
   pix2tex_model_cache:
-    driver: local
+    external: true
 
 
 
