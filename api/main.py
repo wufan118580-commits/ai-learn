@@ -9,7 +9,8 @@ from pathlib import Path
 # 添加项目根目录到 Python 路径，以便导入现有模块
 sys.path.append(str(Path(__file__).parent.parent))
 
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, Security
+from fastapi.security import APIKeyHeader
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from PIL import Image
@@ -32,6 +33,27 @@ app = FastAPI(
 # 全局变量
 ocr_service = None
 formula_handler = None
+
+# ==================== API Key 认证配置 ====================
+API_KEY = os.getenv("API_KEY", "")
+
+# 定义 API Key 请求头名称（行业标准通常使用 X-API-Key 或 Authorization）
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+async def verify_api_key(api_key: str = Security(api_key_header)):
+    """验证 API Key 的依赖函数"""
+    if not API_KEY:
+        # 未配置 API_KEY 时跳过认证（兼容内部调用）
+        return None
+    if api_key != API_KEY:
+        raise HTTPException(
+            status_code=401,
+            detail="无效的 API Key，请在 X-API-Key 请求头中提供有效的密钥",
+            headers={"WWW-Authenticate": "X-API-Key"},
+        )
+    return api_key
+
 
 # CORS 配置
 app.add_middleware(
@@ -88,7 +110,10 @@ async def health_check():
     }
 
 @app.post("/api/v1/formula/recognize")
-async def recognize_formula(image: UploadFile = File(...)):
+async def recognize_formula(
+    image: UploadFile = File(...),
+    _: str = Depends(verify_api_key)
+):
     """
     识别图片中的数学公式
     
@@ -164,7 +189,10 @@ async def recognize_formula(image: UploadFile = File(...)):
         raise HTTPException(500, f"处理失败: {str(e)}")
 
 @app.post("/api/v1/formula/convert")
-async def convert_latex_to_mathml(data: dict):
+async def convert_latex_to_mathml(
+    data: dict,
+    _: str = Depends(verify_api_key)
+):
     """
     将 LaTeX 代码转换为 MathML 格式
     

@@ -10,6 +10,7 @@
 - ⚡ **高性能**：模型懒加载，按需使用
 - 📚 **完整文档**：自动生成的 OpenAPI 文档
 - 🔧 **易于集成**：RESTful API 设计
+- 🔑 **API Key 认证**：可选的密钥认证机制，保护 API 免受未授权访问
 
 ## API 端点
 
@@ -123,10 +124,17 @@ docker run -d \
 ```python
 import requests
 
+API_URL = "http://localhost:8000"
+API_KEY = "sk-你的密钥"  # 如果启用了认证
+
+headers = {}
+if API_KEY:
+    headers["X-API-Key"] = API_KEY
+
 # 识别公式
-url = "http://localhost:8000/api/v1/formula/recognize"
+url = f"{API_URL}/api/v1/formula/recognize"
 files = {"image": open("formula.png", "rb")}
-response = requests.post(url, files=files)
+response = requests.post(url, files=files, headers=headers)
 result = response.json()
 
 if result["success"]:
@@ -136,14 +144,16 @@ if result["success"]:
 
 ### cURL
 ```bash
-# 识别公式
+# 识别公式（带认证）
 curl -X POST \
+  -H "X-API-Key: sk-你的密钥" \
   -F "image=@formula.png" \
   http://localhost:8000/api/v1/formula/recognize
 
-# LaTeX 转 MathML
+# LaTeX 转 MathML（带认证）
 curl -X POST \
   -H "Content-Type: application/json" \
+  -H "X-API-Key: sk-你的密钥" \
   -d '{"latex": "E = mc^2"}' \
   http://localhost:8000/api/v1/formula/convert
 ```
@@ -155,6 +165,39 @@ curl -X POST \
 | `PORT` | 8000 | 服务监听端口 |
 | `HOST` | 0.0.0.0 | 服务监听地址 |
 | `FORMULA_HISTORY_DIR` | formula_history | 历史记录存储目录 |
+| `API_KEY` | （空） | API 密钥，留空则不启用认证；设置后调用需在请求头中携带 `X-API-Key` |
+
+## API Key 认证
+
+### 启用认证
+
+在 `.env` 文件或环境变量中设置 `API_KEY`：
+
+```bash
+# 生成随机密钥（推荐）
+python -c "import secrets; print('sk-' + secrets.token_urlsafe(32))"
+
+# .env 配置
+API_KEY=sk-你的密钥字符串
+```
+
+### 认证方式
+
+通过 HTTP 请求头传递 API Key：
+
+```
+X-API-Key: sk-你的密钥字符串
+```
+
+> **注意**：以下端点**无需认证**：`GET /`、`GET /health`  
+> 以下端点**需要认证**（启用时）：`POST /api/v1/formula/recognize`、`POST /api/v1/formula/convert`
+
+### 兼容模式
+
+当 `API_KEY` 为空时，认证自动跳过，适用于：
+- Docker Compose 内部服务间调用（如 UI → API）
+- 开发调试阶段
+- 内网部署场景
 
 ## 性能说明
 
@@ -169,6 +212,7 @@ curl -X POST \
 |--------|------|
 | 200 | 成功 |
 | 400 | 请求参数错误 |
+| 401 | 未授权（API Key 无效或缺失） |
 | 422 | 识别失败 |
 | 500 | 服务器内部错误 |
 | 503 | 服务不可用 |
