@@ -20,6 +20,15 @@ class FormulaAPIClient:
         """
         self.base_url = base_url or os.getenv("FORMULA_API_URL", "http://localhost:8000")
         self.base_url = self.base_url.rstrip("/")
+        # 读取 API Key（用于认证）
+        self.api_key = os.getenv("API_KEY", "")
+    
+    def _get_headers(self) -> Dict[str, str]:
+        """获取请求头，包含 API Key 认证信息"""
+        headers = {}
+        if self.api_key:
+            headers["X-API-Key"] = self.api_key
+        return headers
         
     def health_check(self) -> Dict[str, Any]:
         """检查 API 服务状态"""
@@ -47,6 +56,7 @@ class FormulaAPIClient:
             response = requests.post(
                 f"{self.base_url}/api/v1/formula/recognize",
                 files=files,
+                headers=self._get_headers(),
                 timeout=30  # 模型加载可能需要时间
             )
             
@@ -78,6 +88,7 @@ class FormulaAPIClient:
             response = requests.post(
                 f"{self.base_url}/api/v1/formula/convert",
                 json=data,
+                headers=self._get_headers(),
                 timeout=10
             )
             
