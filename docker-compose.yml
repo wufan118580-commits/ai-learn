@@ -16,7 +16,10 @@ services:
       # 公式识别历史记录持久化存储
       - formula_data:/app/formula_history
       # 模型缓存持久化（避免每次启动重新下载 Pix2Tex 模型）
-      - pix2tex_model_cache:/opt/conda/lib/python3.11/site-packages/pix2tex/model/checkpoints
+      # 注意：路径需与基础镜像的 site-packages 匹配：
+      #   - python:3.11-slim → /usr/local/lib/python3.11/site-packages/
+      #   - pytorch/pytorch (conda) → /opt/conda/lib/python3.11/site-packages/
+      - pix2tex_model_cache:/usr/local/lib/python3.11/site-packages/pix2tex/model/checkpoints
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
