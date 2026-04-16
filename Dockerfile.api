@@ -1,5 +1,11 @@
-# API 服务 Dockerfile（完整 PyTorch）
-FROM pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime
+# API 服务 Dockerfile
+# 基础镜像选择：
+#   - 方案 A：pytorch 官方 CUDA runtime（含 CUDA 库，约 ~3GB，无 GPU 也可运行）
+#   - 方案 B：Python 基础镜像 + CPU 版 PyTorch（最轻量，约 ~1.5GB，无 GPU 时推荐）
+#
+#FROM pytorch/pytorch:2.10.0-cuda13.0-cudnn9-runtime    # 方案 A（已注释，约 2.89GB）
+# 方案 B（当前使用，轻量基础）
+FROM python:3.11-slim                                   
 
 # 设置时区
 ENV TZ=Asia/Shanghai
