@@ -11,7 +11,8 @@ latex2mathml==3.77.0
 pix2tex
 
 # PyTorch 安装说明：
-#   - 方案 A（pytorch 官方镜像）：torch 已由基础镜像提供，无需安装（注释掉下面一行）
-#   - 方案 B（python:3.11-slim 基础镜像）：需要安装 CPU 版 PyTorch
-torch --index-url https://download.pytorch.org/whl/cpu    # CPU 版 PyTorch（约 ~200MB）
+#   - 方案 A（pytorch 官方镜像）：torch 已由基础镜像提供，无需安装
+#   - 方案 B（python:3.11-slim 基础镜像）：使用阿里云 CPU 版 PyTorch 源
+--find-links https://mirrors.aliyun.com/pytorch-wheels/cpu
+torch
 numpy<2  # pix2tex 需要 NumPy 1.x
