@@ -33,9 +33,9 @@ ENV QT_QPA_PLATFORM=offscreen
 ENV OPENCV_IO_ENABLE_OPENEXR=1
 
 # 直接使用 api/requirements-api.txt
-# 配置国内 pip 镜像源（腾讯云服务器访问 PyPI 需要加速）
-RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple && \
-    pip config set global.trusted-host pypi.tuna.tsinghua.edu.cn
+# 配置国内 pip 镜像源（使用阿里云源，构建速度更快）
+RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/ && \
+    pip config set global.trusted-host mirrors.aliyun.com
 
 # 先升级 pip 和 setuptools
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
