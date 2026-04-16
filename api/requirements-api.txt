@@ -9,4 +9,9 @@ python-dotenv==1.0.0
 pillow==10.1.0
 latex2mathml==3.77.0
 pix2tex
-# 注意：torch 已由基础镜像 pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime 提供，无需重复安装
+
+# PyTorch 安装说明：
+#   - 方案 A（pytorch 官方镜像）：torch 已由基础镜像提供，无需安装（注释掉下面一行）
+#   - 方案 B（python:3.11-slim 基础镜像）：需要安装 CPU 版 PyTorch
+torch --index-url https://download.pytorch.org/whl/cpu    # CPU 版 PyTorch（约 ~200MB）
+numpy<2  # pix2tex 需要 NumPy 1.x
